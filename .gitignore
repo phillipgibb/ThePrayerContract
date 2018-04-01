@@ -1,0 +1,9 @@
+node_modules
+*.bak
+*.bak.js
+build
+build_webpack
+.idea
+.vscode
+*.lock
+*lock.*
