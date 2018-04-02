@@ -23,6 +23,7 @@ const applySetResultNrOfPrayers = (totalNumberOfPrayers) => (prevState) => ({
 export class ListPrayers extends Component {
     constructor(props) {
         super(props);
+        this.handleOnPageinationButton = this.handleOnPageinationButton.bind(this);
         this.contracts = props.context.drizzle.contracts;
         this.state = {
             totalNumberOfPrayers: 0,
@@ -38,9 +39,14 @@ export class ListPrayers extends Component {
         });
     }
 
-    onPaginatedSearch = (e) =>
-        this.fetchPrayersFromContract(this.state.page + 1);
+    onPaginatedSearch = (e) => {
+        this.fetchPrayersFromContract(this.state.page);
+    };
 
+    handleOnPageinationButton(newPageNr){
+        this.state.page = newPageNr;
+        this.onPaginatedSearch();
+    };
 
     async fetchTotalNumberOfPrayersFromContract() {
         let state = this.props.context.drizzle.store.getState();
@@ -48,7 +54,9 @@ export class ListPrayers extends Component {
             from: state.accounts[0],
             gas: 650000
         });
-        this.onSetNrOfPrayersResult(totalNumberOfPrayers);
+        this.state.totalNumberOfPrayers = totalNumberOfPrayers;
+        this.state.pages = totalNumberOfPrayers>0?Math.ceil(totalNumberOfPrayers/10):0;
+        //this.onSetNrOfPrayersResult(totalNumberOfPrayers);
     }
     //columns to do
     //fetch with most recent
@@ -102,7 +110,7 @@ export class ListPrayers extends Component {
                     list={this.state.prayers}
                     page={this.state.page}
                     pages={this.state.pages}
-                    onPaginatedSearch={this.onPaginatedSearch}
+                    handleOnPageinationButton={this.handleOnPageinationButton}
                 />
             </div>
 
@@ -133,16 +141,17 @@ let PageButtons = React.createClass({
         return (
             <Pagination>
                 {pageItems.map(item =>
-                    <PaginationItem key={item.id}>
-                        <PaginationLink href={item.id} >{item.id}</PaginationLink>
-                    </PaginationItem>
+                        <PaginationItem key={item.id}>
+                            <PaginationLink onClick={() => this.props.handleOnPageinationButton(item.id)}>{item.id}</PaginationLink>
+                        </PaginationItem>
+                    ,this
                 )}
             </Pagination>
         );
     }
 });
 
-const List = ({list, page, pages, onPaginatedSearch}) =>
+const List = ({list, page, pages, handleOnPageinationButton}) =>
      <div>
         <div>
             <ListGroup>
@@ -153,11 +162,9 @@ const List = ({list, page, pages, onPaginatedSearch}) =>
         </div>
         <div className="interactions">
         {
-            page !== null && <div><br/><PageButtons noOfPages={pages}/></div>
+            page !== null && <div><br/><PageButtons noOfPages={pages} handleOnPageinationButton={handleOnPageinationButton} /></div>
 
 }
-
-
     </div>
 </div>;
 
