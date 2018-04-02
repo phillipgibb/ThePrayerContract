@@ -21,8 +21,8 @@ class AddPrayerModal extends Component {
     }
 
     async handleAddPrayerButton() {
-        let state = this.context.drizzle.store.getState();
-        const result = await this.context.drizzle.contracts.ThePrayerContract.methods.addPrayer(this.state.prayerTitle, this.state.prayerDetail).send({from: state.accounts[0], gas: 650000});
+        let state = this.props.context.drizzle.store.getState();
+        const result = await this.props.context.drizzle.contracts.ThePrayerContract.methods.addPrayer(this.state.prayerTitle, this.state.prayerDetail).send({from: state.accounts[0], gas: 650000});
     }
 
     render() {

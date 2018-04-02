@@ -2,7 +2,8 @@ import React, {Component} from 'react'
 import PropTypes from 'prop-types'
 import {ListGroup, ListGroupItem, Button} from 'reactstrap';
 import { Pagination, PaginationItem, PaginationLink } from 'reactstrap';
-
+// import { _ } from 'lodash';
+var _ = require('lodash');
 
 const applyUpdateResult = (result, page) => (prevState) => ({
     prayers: [...prevState, ...result],
@@ -16,16 +17,18 @@ const applySetResult = (result, page) => (prevState) => ({
 
 const applySetResultNrOfPrayers = (totalNumberOfPrayers) => (prevState) => ({
     totalNumberOfPrayers: totalNumberOfPrayers,
+    pages: totalNumberOfPrayers>0?Math.ceil(totalNumberOfPrayers/10):0,
 });
 
 export class ListPrayers extends Component {
-    constructor(props, context) {
+    constructor(props) {
         super(props);
         this.contracts = props.context.drizzle.contracts;
         this.state = {
             totalNumberOfPrayers: 0,
             prayers: [],
             page: null,
+            pages: 0,
         };
 
         this.contracts = props.context.drizzle.contracts;
@@ -98,6 +101,7 @@ export class ListPrayers extends Component {
                 <List
                     list={this.state.prayers}
                     page={this.state.page}
+                    pages={this.state.pages}
                     onPaginatedSearch={this.onPaginatedSearch}
                 />
             </div>
@@ -121,60 +125,39 @@ ListPrayers.contextTypes = {
     drizzle: PropTypes.object
 };
 
-const List = ({list, page, onPaginatedSearch}) =>
-    <div>
+
+let PageButtons = React.createClass({
+    render: function() {
+
+        let pageItems = _.range(0, this.props.noOfPages).map(i => { return { id: i, name: 'Item ' + i }; });
+        return (
+            <Pagination>
+                {pageItems.map(item =>
+                    <PaginationItem key={item.id}>
+                        <PaginationLink href={item.id} >{item.id}</PaginationLink>
+                    </PaginationItem>
+                )}
+            </Pagination>
+        );
+    }
+});
+
+const List = ({list, page, pages, onPaginatedSearch}) =>
+     <div>
         <div>
             <ListGroup>
-                {list.map(item =>
-                    <ListGroupItem>{item.prayerTitle}</ListGroupItem>)}
+                {list.map(function(name, index) {
+                    return <ListGroupItem key={index}>{name.prayerTitle}</ListGroupItem>;
+                })}
             </ListGroup>
         </div>
         <div className="interactions">
         {
-            page !== null &&
+            page !== null && <div><br/><PageButtons noOfPages={pages}/></div>
 
-                //for loop
-                //need to calculate nr of max pages
-            <Pagination>
-            <PaginationItem disabled>
-            <PaginationLink previous href="#" />
-            </PaginationItem>
-            <PaginationItem active>
-            <PaginationLink href="#">
-            1
-            </PaginationLink>
-            </PaginationItem>
-            <PaginationItem>
-            <PaginationLink href="#">
-            2
-            </PaginationLink>
-            </PaginationItem>
-            <PaginationItem>
-            <PaginationLink href="#">
-            3
-            </PaginationLink>
-            </PaginationItem>
-            <PaginationItem>
-            <PaginationLink href="#">
-            4
-            </PaginationLink>
-            </PaginationItem>
-            <PaginationItem>
-            <PaginationLink href="#">
-            5
-            </PaginationLink>
-            </PaginationItem>
-            <PaginationItem>
-            <PaginationLink next href="#" />
-            </PaginationItem>
-            </Pagination>
-        //     <button
-        //     type="button"
-        //     onClick={onPaginatedSearch}
-        // >
-        //     More
-        // </button>
-    }
+}
+
+
     </div>
 </div>;
 
