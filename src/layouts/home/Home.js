@@ -16,6 +16,7 @@ import {
     Row,
     Col
 } from 'reactstrap';
+import ListAnsweredPrayers from "../../components/ListAnsweredPrayers";
 
 class Home extends Component {
     constructor(props, context) {
@@ -53,11 +54,11 @@ class Home extends Component {
                         methodArgs={[]}
                     /></h2>
                 <Row>
-                    <Col>
+                    <Col xs="3">
                         <Button color="primary" onClick={this.toggle}>Submit a Prayer</Button>
                     </Col>
                     <Col>
-                        <div className="interactions">
+                        {/*<div className="interactions">*/}
                             <Form>
                                 <InputGroup>
                                     <Input type="text" ref={node => this.input = node}/>
@@ -65,20 +66,24 @@ class Home extends Component {
                                                                                 onClick={this.onInitialSearch}>Search</Button></InputGroupAddon>
                                 </InputGroup>
                             </Form>
-                        </div>
+                        {/*</div>*/}
                     </Col>
                 </Row>
-
+                <br/><br/>
+                <Container>
+                    <Col>
+                        <ListPrayers context={this.context}/>
+                    </Col>
+                    <Col>
+                        <ListAnsweredPrayers context={this.context}/>
+                    </Col>
+                </Container>
                 <Modal isOpen={this.state.modal} toggle={this.toggle}>
                     <ModalHeader toggle={this.toggle}>Add Prayer</ModalHeader>
                     <ModalBody>
                         <AddPrayerModal context={this.context} onClose={this.toggle}/>
                     </ModalBody>
                 </Modal>
-                <br/><br/>
-                <div>
-                    <ListPrayers context={this.context}/>
-                </div>
             </Container>
 
         )

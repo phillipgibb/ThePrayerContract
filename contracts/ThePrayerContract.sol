@@ -8,8 +8,10 @@ contract ThePrayerContract {
 
     mapping(address => PrayerData[]) public thePrayerList;
     mapping(uint => PrayerLinkData) public thePrayerLinks;
+    mapping(uint => PrayerLinkData) public theAnsweredPrayerLinks;
     uint public numberOfPrayerMakers;
     uint public totalNumberOfPrayers;
+    uint public totalNumberOfAnsweredPrayers;
 
     event PrayerAdded(address prayerAddress, string prayerTitle, string prayerDetail);
     event PrayerAnswered(address prayerAddress, string prayerTitle, uint index);
@@ -29,18 +31,25 @@ contract ThePrayerContract {
         uint prayerMakerIndex;
     }
 
-    function getPrayer(uint index) public view returns (string, string, uint) {
+    function getPrayer(uint index) public view returns (string, string, uint, uint) {
         require(totalNumberOfPrayers > 0);
         PrayerLinkData memory linkData = thePrayerLinks[index];
         return getPrayer(linkData.prayerMakerAddress, linkData.prayerMakerIndex);
     }
 
-    function getPrayer(address prayerAddress, uint index) public view returns (string, string, uint) {
+    function getAnsweredPrayer(uint index) public view returns (string, string, uint, uint) {
+        require(totalNumberOfAnsweredPrayers > 0);
+        PrayerLinkData memory linkData = theAnsweredPrayerLinks[index];
+        return getPrayer(linkData.prayerMakerAddress, linkData.prayerMakerIndex);
+    }
+
+    function getPrayer(address prayerAddress, uint index) public view returns (string, string, uint, uint) {
         require(thePrayerList[prayerAddress].length > 0);
         return (
-        thePrayerList[prayerAddress][index].prayerTitle,
-        thePrayerList[prayerAddress][index].prayerDetail,
-        thePrayerList[prayerAddress][index].timestamp
+            thePrayerList[prayerAddress][index].prayerTitle,
+            thePrayerList[prayerAddress][index].prayerDetail,
+            thePrayerList[prayerAddress][index].timestamp,
+            thePrayerList[prayerAddress][index].answeredTimestamp
         );
     }
 
@@ -86,6 +95,8 @@ contract ThePrayerContract {
         PrayerData storage prayer = thePrayerList[msg.sender][prayerIndex];
         prayer.answered = true;
         prayer.answeredTimestamp = now;
+        theAnsweredPrayerLinks[totalNumberOfAnsweredPrayers] = PrayerLinkData(prayerAddress, prayerIndex);
+        totalNumberOfAnsweredPrayers = totalNumberOfAnsweredPrayers.add(1);
         PrayerAnswered(prayerAddress, prayer.prayerTitle, prayerIndex);
         return prayer.answeredTimestamp.sub(prayer.timestamp);
     }
