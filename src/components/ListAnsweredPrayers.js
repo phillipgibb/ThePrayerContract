@@ -74,10 +74,13 @@ export class ListAnsweredPrayers extends Component {
                 gas: 650000
             });
             let prayer = {
-                prayerTitle: result[0],
-                prayerDetail: result[1],
-                prayerTimestamp: result[2],
-                answeredTimestamp: result[3],
+                prayerMakerAddress: result[0],
+                index: result[1],
+                count: result[2],
+                prayerTitle: result[3],
+                prayerDetail: result[4],
+                prayerTimestamp: result[5],
+                answeredTimestamp: result[6],
 
             };
             answeredPrayers.push(prayer);

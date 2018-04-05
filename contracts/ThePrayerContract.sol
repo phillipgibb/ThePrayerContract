@@ -31,25 +31,29 @@ contract ThePrayerContract {
         uint prayerMakerIndex;
     }
 
-    function getPrayer(uint index) public view returns (string, string, uint, uint) {
+    function getPrayer(uint index) public view returns (address, uint, uint, string, string, uint, uint) {
         require(totalNumberOfPrayers > 0);
         PrayerLinkData memory linkData = thePrayerLinks[index];
         return getPrayer(linkData.prayerMakerAddress, linkData.prayerMakerIndex);
     }
 
-    function getAnsweredPrayer(uint index) public view returns (string, string, uint, uint) {
+    function getAnsweredPrayer(uint index) public view returns (address, uint, uint, string, string, uint, uint) {
         require(totalNumberOfAnsweredPrayers > 0);
         PrayerLinkData memory linkData = theAnsweredPrayerLinks[index];
         return getPrayer(linkData.prayerMakerAddress, linkData.prayerMakerIndex);
     }
 
-    function getPrayer(address prayerAddress, uint index) public view returns (string, string, uint, uint) {
+    function getPrayer(address prayerAddress, uint index) public view returns (address, uint, uint, string, string, uint, uint) {
         require(thePrayerList[prayerAddress].length > 0);
+        PrayerData memory data = thePrayerList[prayerAddress][index];
         return (
-            thePrayerList[prayerAddress][index].prayerTitle,
-            thePrayerList[prayerAddress][index].prayerDetail,
-            thePrayerList[prayerAddress][index].timestamp,
-            thePrayerList[prayerAddress][index].answeredTimestamp
+            prayerAddress,
+            index,
+            data.prayerCount,
+            data.prayerTitle,
+            data.prayerDetail,
+            data.timestamp,
+            data.answeredTimestamp
         );
     }
 

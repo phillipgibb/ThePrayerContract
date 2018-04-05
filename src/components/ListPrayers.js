@@ -1,7 +1,9 @@
 import React, {Component} from 'react'
 import PropTypes from 'prop-types'
 import {ListGroup, ListGroupItem, Button} from 'reactstrap';
-import { Pagination, PaginationItem, PaginationLink } from 'reactstrap';
+import { Pagination, PaginationItem, PaginationLink, Row, Col, Alert } from 'reactstrap';
+import SimpleTooltip from "./SimpleTooltip";
+
 // import { _ } from 'lodash';
 var _ = require('lodash');
 
@@ -24,12 +26,16 @@ export class ListPrayers extends Component {
     constructor(props) {
         super(props);
         this.handleOnPageinationButton = this.handleOnPageinationButton.bind(this);
+        this.handleIncrementPrayerButton = this.handleIncrementPrayerButton.bind(this);
+
         this.contracts = props.context.drizzle.contracts;
         this.state = {
             totalNumberOfPrayers: 0,
             prayers: [],
             page: null,
             pages: 0,
+            prayerAddress: 0x0,
+            prayerIndex: 0
         };
 
         this.contracts = props.context.drizzle.contracts;
@@ -47,6 +53,26 @@ export class ListPrayers extends Component {
         this.state.page = newPageNr;
         this.onPaginatedSearch();
     };
+
+
+    onIncrementPrayer = (e) => {
+        this.incrementPrayersInContract(this.state.prayerAddress, this.state.prayerIndex);
+    };
+
+    handleIncrementPrayerButton(address, index){
+        this.state.prayerAddress = address;
+        this.state.prayerIndex = index;
+        this.onIncrementPrayer();
+    };
+
+
+    async incrementPrayersInContract(address, index) {
+        let state = this.props.context.drizzle.store.getState();
+        await this.props.context.drizzle.contracts.ThePrayerContract.methods.incrementPrayer(address, index).send({
+            from: state.accounts[0],
+            gas: 650000
+        });
+    }
 
     async fetchTotalNumberOfPrayersFromContract() {
         let state = this.props.context.drizzle.store.getState();
@@ -79,9 +105,12 @@ export class ListPrayers extends Component {
                 gas: 650000
             });
             let prayer = {
-                prayerTitle: result[0],
-                prayerDetail: result[1],
-                prayerTimestamp: result[2]
+                prayerMakerAddress: result[0],
+                index: result[1],
+                count: result[2],
+                prayerTitle: result[3],
+                prayerDetail: result[4],
+                prayerTimestamp: result[5]
             };
             prayers.push(prayer);
         }
@@ -111,6 +140,7 @@ export class ListPrayers extends Component {
                     page={this.state.page}
                     pages={this.state.pages}
                     handleOnPageinationButton={this.handleOnPageinationButton}
+                    incrementPrayer={this.handleIncrementPrayerButton}
                 />
             </div>
 
@@ -151,12 +181,27 @@ let PageButtons = React.createClass({
     }
 });
 
-const List = ({list, page, pages, handleOnPageinationButton}) =>
+const List = ({list, page, pages, handleOnPageinationButton, incrementPrayer}) => {
+    return (
      <div>
         <div>
             <ListGroup>
-                {list.map(function(name, index) {
-                    return <ListGroupItem key={index}>{name.prayerTitle}</ListGroupItem>;
+                {list.map(function(prayer) {
+                    return <ListGroupItem id={"Tooltip-" + prayer.prayerMakerAddress+prayer.index} key={prayer.prayerMakerAddress+prayer.index}>
+                        <SimpleTooltip placement="top" target={"Tooltip-" + prayer.prayerMakerAddress+prayer.index}>
+                            <p><strong>Prayer Detail:</strong></p>{prayer.prayerDetail}
+                        </SimpleTooltip>
+                        <Alert color="primary">
+                        <Row>
+                            <Col>{prayer.prayerTitle}</Col>
+                            <Col>
+                                <Button color="primary"
+                                     onClick={() => incrementPrayer(prayer.prayerMakerAddress, prayer.index)}>Increment Prayer
+                                </Button>
+                            </Col>
+                        </Row>
+                        </Alert>
+                    </ListGroupItem>
                 })}
             </ListGroup>
         </div>
@@ -164,8 +209,9 @@ const List = ({list, page, pages, handleOnPageinationButton}) =>
         {
             page !== null && <div><br/><PageButtons noOfPages={pages} handleOnPageinationButton={handleOnPageinationButton} /></div>
 
-}
-    </div>
-</div>;
+        }
+        </div>
+     </div>)
+};
 
 export default ListPrayers;

@@ -71,12 +71,19 @@ class Home extends Component {
                 </Row>
                 <br/><br/>
                 <Container>
-                    <Col>
-                        <ListPrayers context={this.context}/>
-                    </Col>
-                    <Col>
-                        <ListAnsweredPrayers context={this.context}/>
-                    </Col>
+                    <Row>
+                        <Col xs="6">The Prayer List</Col>
+                        <Col xs="6">Answered Prayers</Col>
+                    </Row>
+                    <Row>
+                        <Col xs="6">
+                            <ListPrayers context={this.context}/>
+                        </Col>
+                        <Col xs="6">
+                            <ListAnsweredPrayers context={this.context}/>
+                        </Col>
+                    </Row>
+
                 </Container>
                 <Modal isOpen={this.state.modal} toggle={this.toggle}>
                     <ModalHeader toggle={this.toggle}>Add Prayer</ModalHeader>
