@@ -2,7 +2,7 @@ import React, {Component} from 'react'
 import PropTypes from 'prop-types'
 import {ListGroup, ListGroupItem, Button} from 'reactstrap';
 import { Pagination, PaginationItem, PaginationLink, Row, Col, Alert } from 'reactstrap';
-import SimpleTooltip from "./SimpleTooltip";
+import PrayerWidget from "./widget/PrayerWidget";
 
 // import { _ } from 'lodash';
 var _ = require('lodash');
@@ -187,20 +187,8 @@ const List = ({list, page, pages, handleOnPageinationButton, incrementPrayer}) =
         <div>
             <ListGroup>
                 {list.map(function(prayer) {
-                    return <ListGroupItem id={"Tooltip-" + prayer.prayerMakerAddress+prayer.index} key={prayer.prayerMakerAddress+prayer.index}>
-                        <SimpleTooltip placement="top" target={"Tooltip-" + prayer.prayerMakerAddress+prayer.index}>
-                            <p><strong>Prayer Detail:</strong></p>{prayer.prayerDetail}
-                        </SimpleTooltip>
-                        <Alert color="primary">
-                        <Row>
-                            <Col>{prayer.prayerTitle}</Col>
-                            <Col>
-                                <Button color="primary"
-                                     onClick={() => incrementPrayer(prayer.prayerMakerAddress, prayer.index)}>Increment Prayer
-                                </Button>
-                            </Col>
-                        </Row>
-                        </Alert>
+                    return <ListGroupItem color="primary" id={"Tooltip-" + prayer.prayerMakerAddress+prayer.index} key={prayer.prayerMakerAddress+prayer.index}>
+                        <PrayerWidget title={prayer.prayerTitle} detail={prayer.prayerDetail} number={prayer.count} index={prayer.index} address={prayer.prayerMakerAddress} onClick={incrementPrayer}/>
                     </ListGroupItem>
                 })}
             </ListGroup>
