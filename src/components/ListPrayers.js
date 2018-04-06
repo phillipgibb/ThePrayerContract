@@ -132,10 +132,11 @@ export class ListPrayers extends Component {
         this.setState(applySetResultNrOfPrayers(nrOfPrayers));
 
     render() {
-
+        let state = this.props.context.drizzle.store.getState();
         return (
             <div className="page">
                 <List
+                    address={state.accounts[0]}
                     list={this.state.prayers}
                     page={this.state.page}
                     pages={this.state.pages}
@@ -181,14 +182,14 @@ let PageButtons = React.createClass({
     }
 });
 
-const List = ({list, page, pages, handleOnPageinationButton, incrementPrayer}) => {
+const List = ({address, list, page, pages, handleOnPageinationButton, incrementPrayer}) => {
     return (
      <div>
         <div>
             <ListGroup>
                 {list.map(function(prayer) {
                     return <ListGroupItem color="primary" id={"Tooltip-" + prayer.prayerMakerAddress+prayer.index} key={prayer.prayerMakerAddress+prayer.index}>
-                        <PrayerWidget title={prayer.prayerTitle} detail={prayer.prayerDetail} number={prayer.count} index={prayer.index} address={prayer.prayerMakerAddress} onClick={incrementPrayer}/>
+                        <PrayerWidget address={address} title={prayer.prayerTitle} detail={prayer.prayerDetail} number={prayer.count} index={prayer.index} prayerMakerAddress={prayer.prayerMakerAddress} onClick={incrementPrayer}/>
                     </ListGroupItem>
                 })}
             </ListGroup>
