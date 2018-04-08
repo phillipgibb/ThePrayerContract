@@ -26,7 +26,8 @@ export class ListPrayers extends Component {
     constructor(props) {
         super(props);
         this.handleOnPageinationButton = this.handleOnPageinationButton.bind(this);
-        this.handleIncrementPrayerButton = this.handleIncrementPrayerButton.bind(this);
+        this.handleJoinPrayerButton = this.handleJoinPrayerButton.bind(this);
+        this.handleAnswerPrayerButton = this.handleAnswerPrayerButton.bind(this);
 
         this.contracts = props.context.drizzle.contracts;
         this.state = {
@@ -55,20 +56,37 @@ export class ListPrayers extends Component {
     };
 
 
-    onIncrementPrayer = (e) => {
-        this.incrementPrayersInContract(this.state.prayerAddress, this.state.prayerIndex);
+    onJoinPrayer = (e) => {
+        this.incrementPrayerInContract(this.state.prayerAddress, this.state.prayerIndex);
     };
 
-    handleIncrementPrayerButton(address, index){
+    onAnswerPrayer = (e) => {
+        this.markPrayerAnsweredInContract(this.state.prayerAddress, this.state.prayerIndex);
+    };
+
+    handleJoinPrayerButton(address, index){
         this.state.prayerAddress = address;
         this.state.prayerIndex = index;
-        this.onIncrementPrayer();
+        this.onJoinPrayer();
     };
 
+    handleAnswerPrayerButton(address, index){
+        this.state.prayerAddress = address;
+        this.state.prayerIndex = index;
+        this.onAnswerPrayer();
+    };
 
-    async incrementPrayersInContract(address, index) {
+    async incrementPrayerInContract(address, index) {
         let state = this.props.context.drizzle.store.getState();
         await this.props.context.drizzle.contracts.ThePrayerContract.methods.incrementPrayer(address, index).send({
+            from: state.accounts[0],
+            gas: 650000
+        });
+    }
+
+    async markPrayerAnsweredInContract(address, index) {
+        let state = this.props.context.drizzle.store.getState();
+        await this.props.context.drizzle.contracts.ThePrayerContract.methods.answerPrayer(address, index).send({
             from: state.accounts[0],
             gas: 650000
         });
@@ -110,9 +128,13 @@ export class ListPrayers extends Component {
                 count: result[2],
                 prayerTitle: result[3],
                 prayerDetail: result[4],
-                prayerTimestamp: result[5]
+                prayerTimestamp: result[5],
+                answeredTimestamp: result[6]
+
             };
-            prayers.push(prayer);
+            if (prayer.answeredTimestamp === "0") {
+                prayers.push(prayer);
+            }
         }
         if (prayers.length > 0) {
             this.onSetResult(prayers, page);
@@ -141,7 +163,8 @@ export class ListPrayers extends Component {
                     page={this.state.page}
                     pages={this.state.pages}
                     handleOnPageinationButton={this.handleOnPageinationButton}
-                    incrementPrayer={this.handleIncrementPrayerButton}
+                    answerPrayer={this.handleAnswerPrayerButton}
+                    joinPrayer={this.handleJoinPrayerButton}
                 />
             </div>
 
@@ -182,14 +205,21 @@ let PageButtons = React.createClass({
     }
 });
 
-const List = ({address, list, page, pages, handleOnPageinationButton, incrementPrayer}) => {
+const List = ({address, list, page, pages, handleOnPageinationButton, answerPrayer, joinPrayer}) => {
     return (
      <div>
         <div>
             <ListGroup>
                 {list.map(function(prayer) {
                     return <ListGroupItem color="primary" id={"Tooltip-" + prayer.prayerMakerAddress+prayer.index} key={prayer.prayerMakerAddress+prayer.index}>
-                        <PrayerWidget address={address} title={prayer.prayerTitle} detail={prayer.prayerDetail} number={prayer.count} index={prayer.index} prayerMakerAddress={prayer.prayerMakerAddress} onClick={incrementPrayer}/>
+                        <PrayerWidget address={address}
+                                      title={prayer.prayerTitle}
+                                      detail={prayer.prayerDetail}
+                                      number={prayer.count}
+                                      index={prayer.index}
+                                      prayerMakerAddress={prayer.prayerMakerAddress}
+                                      onAnswer={answerPrayer}
+                                      onJoin={joinPrayer}/>
                     </ListGroupItem>
                 })}
             </ListGroup>

@@ -22,8 +22,6 @@ import store from './store'
 // Initialize react-router-redux.
 const history = syncHistoryWithStore(browserHistory, store);
 
-console.log(ThePrayerContract);
-
 // Set Drizzle options.
 const options = {
   web3: {

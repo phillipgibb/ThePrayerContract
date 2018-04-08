@@ -24,7 +24,51 @@ class Home extends Component {
         this.context = context;
         this.state = {modal: false};
         this.toggle = this.toggle.bind(this);
+        this.setupTestState(context);
     }
+
+    setupTestState(context) {
+        let state = context.drizzle.store.getState();
+        let Lipsum = require('node-lipsum');
+        var lipsum = new Lipsum();
+        var lipsumOpts = {
+            start: 'yes',
+            what: 'bytes',
+            amount: 80
+        };
+
+        for (let i = 0; i < 5; i++) {
+            Home.getTestDetail(lipsum, lipsumOpts).then(function (detail) {
+                Home.addTestPrayer("Please Help Account[0] Number [" + i + "]", detail, state.accounts[0], context.drizzle.contracts.ThePrayerContract);
+            });
+
+        }
+        for (let i = 0; i < 2; i++) {
+            Home.getTestDetail(lipsum, lipsumOpts).then(function (detail) {
+                Home.addTestPrayer("Please Help Account[1] Number [" + i + "]", detail, state.accounts[1], context.drizzle.contracts.ThePrayerContract);
+            });
+        }
+
+    }
+
+    static async addTestPrayer(title, detail, account, contract) {
+         await contract.methods.addPrayer(title, detail).send({from: account, gas: 650000});
+    }
+
+    static async getTestDetail(lipsum, lipsumOpts) {
+        return await this.getLipsum(lipsum, lipsumOpts);
+    }
+
+    static getLipsum(lipsum, lipsumOpts) {
+        let text = null;
+        return new Promise(function(resolve, reject) {
+            lipsum.getText(function(res){
+                text = res;
+                resolve(text);
+            }, lipsumOpts);
+        });
+    }
+
 
     toggle() {
         this.setState({
@@ -95,7 +139,6 @@ class Home extends Component {
 
         )
     }
-
 }
 
 Home.contextTypes = {

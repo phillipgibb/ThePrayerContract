@@ -2,6 +2,7 @@ import React, {Component} from 'react'
 import PropTypes from 'prop-types'
 import {ListGroup, ListGroupItem, Button} from 'reactstrap';
 import { Pagination, PaginationItem, PaginationLink } from 'reactstrap';
+import PrayerWidget from "./widget/PrayerWidget";
 // import { _ } from 'lodash';
 var _ = require('lodash');
 
@@ -100,10 +101,11 @@ export class ListAnsweredPrayers extends Component {
             : this.setState(applyUpdateResult(result, page));
 
     render() {
-
+        let state = this.props.context.drizzle.store.getState();
         return (
             <div className="page">
                 <List
+                    address={state.accounts[0]}
                     list={this.state.answeredPrayers}
                     page={this.state.page}
                     pages={this.state.pages}
@@ -148,12 +150,20 @@ let PageButtons = React.createClass({
     }
 });
 
-const List = ({list, page, pages, handleOnPageinationButton}) =>
+const List = ({address, list, page, pages, handleOnPageinationButton}) =>
      <div>
         <div>
             <ListGroup>
-                {list.map(function(name, index) {
-                    return <ListGroupItem key={index}>{name.prayerTitle}</ListGroupItem>;
+                {list.map(function(prayer) {
+                    return <ListGroupItem color="primary" id={"Tooltip-" + prayer.prayerMakerAddress+prayer.index} key={prayer.prayerMakerAddress+prayer.index}>
+                        <PrayerWidget address={address}
+                                      title={prayer.prayerTitle}
+                                      detail={prayer.prayerDetail}
+                                      number={prayer.count}
+                                      index={prayer.index}
+                                      prayerMakerAddress={prayer.prayerMakerAddress}
+                                        />
+                    </ListGroupItem>;
                 })}
             </ListGroup>
         </div>

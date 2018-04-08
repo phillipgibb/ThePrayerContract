@@ -70,7 +70,7 @@ contract ThePrayerContract {
             PrayerAdded(msg.sender, _prayerTitle, _prayerDetail);
         } else {
             PrayerData[] storage prayerMakerPrayers = thePrayerList[msg.sender];
-            uint length = prayerMakerPrayers.push(PrayerData(_prayerTitle, _prayerDetail, false, thePrayerList[msg.sender].length, now, 0));
+            uint length = prayerMakerPrayers.push(PrayerData(_prayerTitle, _prayerDetail, false, 1, now, 0));
             thePrayerLinks[totalNumberOfPrayers] = PrayerLinkData(msg.sender, length.sub(1));
             totalNumberOfPrayers = totalNumberOfPrayers.add(1);
             PrayerAdded(msg.sender, _prayerTitle, _prayerDetail);

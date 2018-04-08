@@ -21,12 +21,15 @@ const PrayerWidget = ({
             <Row>
                 <Col>
                     {
-                    address == prayerMakerAddress &&
-                        <Button onClick={() => onAnswer(prayerMakerAddress, index)}>Answer Prayer</Button>
+                        (address === prayerMakerAddress && onAnswer) &&
+                        <Button onClick={() => onAnswer(prayerMakerAddress, index)}>Prayer Answered</Button>
                     }
                 </Col>
                 <Col>
-                    <Button onClick={() => onJoin(prayerMakerAddress, index)}>Join Prayer [{number}]</Button>
+                    {
+                        onJoin &&
+                        <Button onClick={() => onJoin(prayerMakerAddress, index)}>Join in Prayer [{number}]</Button>
+                    }
                 </Col>
             </Row>
 
