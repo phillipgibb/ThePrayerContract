@@ -267,7 +267,7 @@ const List = ({address, list, page, pages, handleOnPageinationButton, answerPray
                         <td>{prayer.prayerTimestamp}</td>
                         <td>{prayer.answeredTimestamp}</td>
                         <td>{prayer.count}</td>
-                        <td><Button color="info" onClick={() => joinPrayer(prayer.prayerMakerAddress, prayer.index, index)}>Join in Prayer</Button></td>
+                        <td><Button color="info" disabled={(!(prayer.answeredTimestamp === ""))} onClick={() => joinPrayer(prayer.prayerMakerAddress, prayer.index, index)}>Join in Prayer</Button></td>
                         <td><Button color="info" disabled={(!(prayer.answeredTimestamp === "" && prayer.prayerMakerAddress === address))} onClick={() => answerPrayer(prayer.prayerMakerAddress, prayer.index)}>Answer Prayer</Button></td>
                     </tr>
                 } )}
