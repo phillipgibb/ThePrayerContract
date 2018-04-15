@@ -26,18 +26,18 @@ class Home extends Component {
             loading: 'initial',
             modal: false,
             address: 0,
-            totalNumberOfPrayers: 0,
+            totalNumberOfPrayerMakers: 0,
         };
 
         this.toggle = this.toggle.bind(this);
 
 
-        // config.prayerContract.totalNumberOfPrayers.call({
+        // config.prayerContract.totalNumberOfPrayerMakers.call({
         //     from: this.state.address,
         //     gas: 650000
         // }, (error, result) => {
         //     if(!error) {
-        //         this.setState({totalNumberOfPrayers : result});
+        //         this.setState({totalNumberOfPrayerMakers : result});
         //     }else {
         //         console.error(error);
         //     }
@@ -56,9 +56,25 @@ class Home extends Component {
                     address : coinbase,
                     loading: 'false'
                 });
+                this.getTotalNumberOfPrayerMakers();
                 // Home.setupTestState(this.state.address);
             }else {
                 console.error(error);
+            }
+        });
+    }
+
+    getTotalNumberOfPrayerMakers(){
+        let self = this;
+        config.prayerContract.getTheNumberOfPrayerMakers().catch(function (error) {
+            console.error(error);
+        }).then(function(result){
+            if (result[0]) {
+                let number = result[0].toNumber(10);
+                console.log(number);
+                self.setState({totalNumberOfPrayerMakers : number});
+            }else{
+                console.error("Error");
             }
         });
     }
@@ -160,16 +176,16 @@ class Home extends Component {
                     <Col sm={{ size: 6, order: 2, offset: 3 }}>
                         <Alert className="text-center" color="success">
                             The Number of Prayer Makers:{" "}
-                            {this.state.totalNumberOfPrayers}
+                            {this.state.totalNumberOfPrayerMakers}
                         </Alert>
                     </Col>
                 </Row>
-                <Row className="justify-content-md-center" >
-                    <Col sm="3" >
+                <Row className="pb-sm-3 justify-content-center" >
+                    <Col sm="3" className="align-items-sm-center" >
                         <Button color="info" onClick={this.toggle}>Submit your Prayer</Button>
                     </Col>
                     <Col sm="3">
-                        {/*<div className="interactions">*/}
+                        <div className="align-items-sm-center interactions">
                             <Form>
                                 <InputGroup>
                                     <Input type="text" ref={node => this.input = node}/>
@@ -177,11 +193,11 @@ class Home extends Component {
                                                                                 onClick={this.onInitialSearch}>Search</Button></InputGroupAddon>
                                 </InputGroup>
                             </Form>
-                        {/*</div>*/}
+                        </div>
                     </Col>
                 </Row>
-                <Row>
-                    <Col><Alert className="text-center" color="success">The Prayer List</Alert></Col>
+                <Row  className="justify-content-sm-center">
+                    <Col sm={{ size: 6, order: 2 }}><Alert className="text-center" color="success">The Prayer List</Alert></Col>
                  </Row>
                 <Row>
                     <Col>

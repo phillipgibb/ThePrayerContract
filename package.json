@@ -54,6 +54,7 @@
   "dependencies": {
     "bootstrap": "^4.0.0",
     "ethjs": "^0.3.6",
+    "immutability-helper": "^2.6.6",
     "lodash": "^4.17.5",
     "minimist": "^1.2.0",
     "node-lipsum": "^1.0.1",

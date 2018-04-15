@@ -1,6 +1,7 @@
 import React, {Component} from 'react'
 import {Table, Button} from 'reactstrap';
 import { Pagination, PaginationItem, PaginationLink} from 'reactstrap';
+import update from 'immutability-helper';
 var config = require("../config.js");
 
 // import { _ } from 'lodash';
@@ -35,11 +36,15 @@ export class ListPrayersTable extends Component {
             prayers: [],
             page: null,
             pages: 0,
-            prayerAddress: 0x0,
             prayerIndex: 0,
-            address: props.address
+            address: props.address,
+            prayerAddress: 0x0
         };
 
+    }
+
+    shouldComponentUpdate(){
+        return true;
     }
 
     componentWillMount() {
@@ -61,16 +66,16 @@ export class ListPrayersTable extends Component {
     };
 
 
-    onJoinPrayer = (e) => {
-        this.incrementPrayerInContract(this.state.prayerAddress, this.state.prayerIndex);
+    onJoinPrayer = (prayerMakerAddress, index, prayerArrayIndex) => {
+        this.incrementPrayerInContract(prayerMakerAddress, index, prayerArrayIndex);
     };
 
-    onAnswerPrayer = (e) => {
-        this.markPrayerAnsweredInContract(this.state.prayerAddress, this.state.prayerIndex);
+    onAnswerPrayer = (prayerMakerAddress, index) => {
+        this.markPrayerAnsweredInContract(prayerMakerAddress, index);
     };
 
     toDateTime = (secs) => {
-        if ( secs === "0" ) {
+        if ( secs === 0 ) {
             return '';
         }
         var t = new Date(1970, 0, 1); // Epoch
@@ -79,38 +84,46 @@ export class ListPrayersTable extends Component {
     }
 
 
-    handleJoinPrayerButton(address, index){
+    handleJoinPrayerButton(address, index, prayerArrayIndex){
         this.setState({prayerAddress : address});
         this.setState({prayerIndex : index});
-        this.onJoinPrayer();
+        this.onJoinPrayer(address, index, prayerArrayIndex);
     };
 
     handleAnswerPrayerButton(address, index){
         this.setState({prayerAddress : address});
         this.setState({prayerIndex : index});
-        this.onAnswerPrayer();
+        this.onAnswerPrayer(address, index);
     };
 
-    incrementPrayerInContract(account, index) {
+    incrementPrayerInContract(account, index, prayerArrayIndex) {
+        let self = this;
         config.prayerContract.incrementPrayer(account, index, {
             from: account,
             gas: 650000
         }).catch(function (error) {
             console.error(error);
-        }).then(
-            //update pray as incremented in list?
+        }).then(() => {
+            // self.state.prayers[prayerArrayIndex].count++;
+            // self.setState({ state: self.state });
+            let pList = self.state.prayers;
+            let newPrayer = update(pList[prayerArrayIndex], {count: function(x) {return x +1;}});
+            pList[prayerArrayIndex] = newPrayer;
+            self.setState({prayers: pList});
+        }
         );
     }
 
     markPrayerAnsweredInContract(account, index) {
+        let self = this;
         config.prayerContract.answerPrayer(account, index, {
             from: account,
             gas: 650000
         }).catch(function (error) {
             console.error(error);
-        }).then(
-            //deActivate answer button
-            //update pray as answered in list?
+        }).then(() => {
+            self.setState(this.state);
+        }
         );
     }
 
@@ -254,11 +267,10 @@ const List = ({address, list, page, pages, handleOnPageinationButton, answerPray
                         <td>{prayer.prayerTimestamp}</td>
                         <td>{prayer.answeredTimestamp}</td>
                         <td>{prayer.count}</td>
-                        <td><Button color="info" active={prayer.prayerMakerAddress === address} onClick={() => joinPrayer(prayer.prayerMakerAddress, prayer.index)}>Join in Prayer</Button></td>
-                        <td><Button color="info" onClick={() => answerPrayer(prayer.prayerMakerAddress, prayer.index)}>Answer Prayer</Button></td>
-
+                        <td><Button color="info" onClick={() => joinPrayer(prayer.prayerMakerAddress, prayer.index, index)}>Join in Prayer</Button></td>
+                        <td><Button color="info" disabled={(!(prayer.answeredTimestamp === "" && prayer.prayerMakerAddress === address))} onClick={() => answerPrayer(prayer.prayerMakerAddress, prayer.index)}>Answer Prayer</Button></td>
                     </tr>
-                })}
+                } )}
                 </tbody>
             </Table>
         </div>

@@ -9,6 +9,7 @@ class AddPrayerModal extends Component {
         super(props);
 
         this.state = {
+            loadingPrayer: false,
             prayerTitle: '',
             prayerDetail: '',
             account: props.address
@@ -24,15 +25,15 @@ class AddPrayerModal extends Component {
         this.setState({ [event.target.name]: event.target.value })
     }
 
-    async handleAddPrayerButtonold() {
-        const result = await this.props.context.drizzle.contracts.ThePrayerContract.addPrayer(this.state.prayerTitle, this.state.prayerDetail).send({from: this.state.account, gas: 650000});
-    }
-
      handleAddPrayerButton() {
-        config.prayerContract.addPrayer(this.state.prayerTitle, this.state.prayerDetail, {from: this.state.account, gas: 450000}).catch(function (error) {
+        let self = this;
+         self.setState({loadingPrayer: true});
+         config.prayerContract.addPrayer(this.state.prayerTitle, this.state.prayerDetail, {from: this.state.account, gas: 450000}).catch(function (error) {
             console.error(error);
-        }).then(function(result){
-            console.log(JSON.stringify(result));
+            self.setState({loadingPrayer: false});
+         }).then(function(result){
+             self.setState({loadingPrayer: false});
+             console.log(JSON.stringify(result));
         })
     }
     render() {
@@ -43,8 +44,8 @@ class AddPrayerModal extends Component {
                 <Input type="textarea" name="prayerDetail" id="prayerDetail" onChange={this.handleInputChange} />
                 <FormText>Add as much information as you would like, but this could incur extra gas costs.</FormText>
                 <br/>
-                <Button color="primary" onClick={this.handleAddPrayerButton}>Add Prayer</Button> {' '}
-                <Button color="primary" onClick={this.close}>Close</Button>
+                <Button color="info" disabled={(this.state.loadingPrayer)} onClick={this.handleAddPrayerButton}>{(this.state.loadingPrayer)?'Adding ...':'Add Prayer'}</Button> {' '}
+                <Button color="info" onClick={this.close}>Close</Button>
             </Form>
         );
     }
