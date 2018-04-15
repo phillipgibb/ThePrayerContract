@@ -3,6 +3,8 @@ import PropTypes from 'prop-types'
 import {ListGroup, ListGroupItem, Button} from 'reactstrap';
 import { Pagination, PaginationItem, PaginationLink, Row, Col, Alert } from 'reactstrap';
 import PrayerWidget from "./widget/PrayerWidget";
+import prayerContract from "../config.js";
+
 
 // import { _ } from 'lodash';
 var _ = require('lodash');
@@ -41,9 +43,10 @@ export class ListPrayers extends Component {
 
         this.contracts = props.context.drizzle.contracts;
         this.accounts = props.context.drizzle.accounts;
-        this.fetchTotalNumberOfPrayersFromContract().then(() => {
-            this.fetchPrayers(0);
-        });
+        this.fetchTotalNumberOfPrayersFromContract()
+         .then(() => {
+             this.fetchPrayers(0);
+         });
     }
 
     onPaginatedSearch = (e) => {
@@ -94,9 +97,14 @@ export class ListPrayers extends Component {
 
     async fetchTotalNumberOfPrayersFromContract() {
         let state = this.props.context.drizzle.store.getState();
-        let totalNumberOfPrayers = await this.props.context.drizzle.contracts.ThePrayerContract.methods.totalNumberOfPrayers().call({
+        let totalNumberOfPrayers = await prayerContract.methods.totalNumberOfPrayers().call({
             from: state.accounts[0],
             gas: 650000
+        }, function(error, result){
+            if(!error)
+                console.log(JSON.stringify(result));
+            else
+                console.error(error);
         });
         this.state.totalNumberOfPrayers = totalNumberOfPrayers;
         this.state.pages = totalNumberOfPrayers>0?Math.ceil(totalNumberOfPrayers/10):0;
@@ -118,9 +126,14 @@ export class ListPrayers extends Component {
         // });
         let i = from;
         for (; i < to && i < this.state.totalNumberOfPrayers; i++) {
-            const result = await this.props.context.drizzle.contracts.ThePrayerContract.methods.getPrayer(i).call({
+            const result = await prayerContract.methods.getPrayer(i).call({
                 from: state.accounts[0],
                 gas: 650000
+            }, function(error, result){
+                if(!error)
+                    console.log(JSON.stringify(result));
+                else
+                    console.error(error);
             });
             let prayer = {
                 prayerMakerAddress: result[0],
