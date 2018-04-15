@@ -69,7 +69,7 @@ export class ListPrayersTable extends Component {
         this.markPrayerAnsweredInContract(this.state.prayerAddress, this.state.prayerIndex);
     };
 
-    toDateTime(secs) {
+    toDateTime = (secs) => {
         if ( secs === "0" ) {
             return '';
         }
@@ -91,26 +91,34 @@ export class ListPrayersTable extends Component {
         this.onAnswerPrayer();
     };
 
-    async incrementPrayerInContract(address, index) {
-        let account = this.state.address;
-        await config.prayerContract.methods.incrementPrayer(address, index).send({
+    incrementPrayerInContract(account, index) {
+        config.prayerContract.incrementPrayer(account, index, {
             from: account,
             gas: 650000
-        });
+        }).catch(function (error) {
+            console.error(error);
+        }).then(
+            //update pray as incremented in list?
+        );
     }
 
-    async markPrayerAnsweredInContract(address, index) {
-        let account = this.state.address;
-        await config.prayerContract.methods.answerPrayer(address, index).send({
+    markPrayerAnsweredInContract(account, index) {
+        config.prayerContract.answerPrayer(account, index, {
             from: account,
             gas: 650000
-        });
+        }).catch(function (error) {
+            console.error(error);
+        }).then(
+            //deActivate answer button
+            //update pray as answered in list?
+        );
     }
 
       fetchTotalNumberOfPrayersFromContract(){
-        let account = this.state.address;
         let self = this;
-        config.prayerContract.getTotalNumberOfPrayers().then(function(result){
+        config.prayerContract.getTotalNumberOfPrayers().catch(function (error) {
+            console.error(error);
+        }).then(function(result){
             if (result[0]) {
                 let number = result[0].toNumber(10);
                 console.log(number);
@@ -135,46 +143,36 @@ export class ListPrayersTable extends Component {
     //fetch in order of popularity
     //fetch most recently answered
 
-    async fetchPrayersFromContract(page) {
-        let account = this.state.address;
+    fetchPrayersFromContract(page) {
         let from = page * 10;
         let to = from + 10;
         let prayers = [];
-        // const totalNumberOfPrayers = await this.props.context.drizzle.contracts.ThePrayerContract.methods.totalNumberOfPrayers().call({
-        //     from: state.accounts[0],
-        //     gas: 650000
-        // });
         let i = from;
+        let self = this;
         for (; i < to && i < this.state.totalNumberOfPrayers; i++) {
-            const result = await config.prayerContract.methods.getPrayer(i).call({
-                from: account,
-                gas: 650000
-            }, function(error, result){
-                if(!error)
-                    console.log(JSON.stringify(result));
-                else
-                    console.error(error);
-            });
-            let prayer = {
-                prayerMakerAddress: result[0],
-                index: result[1],
-                count: result[2],
-                prayerTitle: result[3],
-                prayerDetail: result[4],
-                prayerTimestamp: this.toDateTime(result[5]),
-                answeredTimestamp: this.toDateTime(result[6])
-
-            };
-            // if (prayer.answeredTimestamp === "0") {
+            config.prayerContract.getPrayer(i).catch(function (error) {
+                console.error(error);
+            }).then(function(result){
+                console.log(JSON.stringify(result));
+                let prayer = {
+                    prayerMakerAddress: result[0],
+                    index: result[1].toNumber(),
+                    count: result[2].toNumber(),
+                    prayerTitle: result[3],
+                    prayerDetail: result[4],
+                    prayerTimestamp: self.toDateTime(result[5].toNumber()),
+                    answeredTimestamp: self.toDateTime(result[6].toNumber())
+                };
                 prayers.push(prayer);
-            // }
+                if (prayers.length === self.state.totalNumberOfPrayers) {
+                    self.onSetResult(prayers, page);
+                }
+                self.setState( {
+                    loading: 'false'
+                });
+            });
+
         }
-        if (prayers.length > 0) {
-            this.onSetResult(prayers, page);
-        }
-        this.setState( {
-            loading: 'false'
-        });
     }
 
     fetchPrayers = (page) =>

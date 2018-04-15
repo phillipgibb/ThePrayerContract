@@ -193,7 +193,7 @@ class Home extends Component {
                 <Modal isOpen={this.state.modal} toggle={this.toggle}>
                     <ModalHeader toggle={this.toggle}>Add Prayer</ModalHeader>
                     <ModalBody>
-                        <AddPrayerModal context={this.context} onClose={this.toggle}/>
+                        <AddPrayerModal address={this.state.address} onClose={this.toggle}/>
                     </ModalBody>
                 </Modal>
             </Container>

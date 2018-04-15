@@ -1,20 +1,23 @@
 import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 import { Button, Input, Form, FormText } from 'reactstrap';
-import { prayerContract, web3, account } from "../config.js";
+var config = require("../config.js");
 
 class AddPrayerModal extends Component {
 
     constructor(props) {
         super(props);
-        this.contracts = props.context.drizzle.contracts;
-        this.handleAddPrayerButton = this.handleAddPrayerButton.bind(this);
-        this.handleInputChange = this.handleInputChange.bind(this);
 
         this.state = {
             prayerTitle: '',
-            prayerDetail: ''
+            prayerDetail: '',
+            account: props.address
         };
+    }
+
+    componentWillMount() {
+        this.handleAddPrayerButton = this.handleAddPrayerButton.bind(this);
+        this.handleInputChange = this.handleInputChange.bind(this);
     }
 
     handleInputChange(event) {
@@ -22,16 +25,14 @@ class AddPrayerModal extends Component {
     }
 
     async handleAddPrayerButtonold() {
-        let state = this.props.context.drizzle.store.getState();
-        const result = await this.props.context.drizzle.contracts.ThePrayerContract.methods.addPrayer(this.state.prayerTitle, this.state.prayerDetail).send({from: state.accounts[0], gas: 650000});
+        const result = await this.props.context.drizzle.contracts.ThePrayerContract.addPrayer(this.state.prayerTitle, this.state.prayerDetail).send({from: this.state.account, gas: 650000});
     }
 
-    static handleAddPrayerButton() {
-        prayerContract.methods.addPrayer(this.state.prayerTitle, this.state.prayerDetail).send({from: account, gas: 450000}, function(error, result){
-            if(!error)
-                console.log(JSON.stringify(result));
-            else
-                console.error(error);
+     handleAddPrayerButton() {
+        config.prayerContract.addPrayer(this.state.prayerTitle, this.state.prayerDetail, {from: this.state.account, gas: 450000}).catch(function (error) {
+            console.error(error);
+        }).then(function(result){
+            console.log(JSON.stringify(result));
         })
     }
     render() {
