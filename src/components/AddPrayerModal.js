@@ -1,6 +1,7 @@
 import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 import { Button, Input, Form, FormText } from 'reactstrap';
+import { prayerContract, web3, account } from "../config.js";
 
 class AddPrayerModal extends Component {
 
@@ -20,11 +21,19 @@ class AddPrayerModal extends Component {
         this.setState({ [event.target.name]: event.target.value })
     }
 
-    async handleAddPrayerButton() {
+    async handleAddPrayerButtonold() {
         let state = this.props.context.drizzle.store.getState();
         const result = await this.props.context.drizzle.contracts.ThePrayerContract.methods.addPrayer(this.state.prayerTitle, this.state.prayerDetail).send({from: state.accounts[0], gas: 650000});
     }
 
+    static handleAddPrayerButton() {
+        prayerContract.methods.addPrayer(this.state.prayerTitle, this.state.prayerDetail).send({from: account, gas: 450000}, function(error, result){
+            if(!error)
+                console.log(JSON.stringify(result));
+            else
+                console.error(error);
+        })
+    }
     render() {
         return (
             <Form>

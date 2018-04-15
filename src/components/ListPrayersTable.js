@@ -1,10 +1,7 @@
 import React, {Component} from 'react'
-import PropTypes from 'prop-types'
-import {ListGroup, ListGroupItem, Button} from 'reactstrap';
-import { Pagination, PaginationItem, PaginationLink, Row, Col, Alert } from 'reactstrap';
-import PrayerWidget from "./widget/PrayerWidget";
-import prayerContract from "../config.js";
-
+import {Table, Button} from 'reactstrap';
+import { Pagination, PaginationItem, PaginationLink} from 'reactstrap';
+var config = require("../config.js");
 
 // import { _ } from 'lodash';
 var _ = require('lodash');
@@ -24,29 +21,34 @@ const applySetResultNrOfPrayers = (totalNumberOfPrayers) => (prevState) => ({
     pages: totalNumberOfPrayers>0?Math.ceil(totalNumberOfPrayers/10):0,
 });
 
-export class ListPrayers extends Component {
+
+export class ListPrayersTable extends Component {
     constructor(props) {
         super(props);
         this.handleOnPageinationButton = this.handleOnPageinationButton.bind(this);
         this.handleJoinPrayerButton = this.handleJoinPrayerButton.bind(this);
         this.handleAnswerPrayerButton = this.handleAnswerPrayerButton.bind(this);
 
-        this.contracts = props.context.drizzle.contracts;
         this.state = {
+            loading: 'initial',
             totalNumberOfPrayers: 0,
             prayers: [],
             page: null,
             pages: 0,
             prayerAddress: 0x0,
-            prayerIndex: 0
+            prayerIndex: 0,
+            address: props.address
         };
 
-        this.contracts = props.context.drizzle.contracts;
-        this.accounts = props.context.drizzle.accounts;
-        this.fetchTotalNumberOfPrayersFromContract()
-         .then(() => {
-             this.fetchPrayers(0);
-         });
+    }
+
+    componentWillMount() {
+        this.setState({ loading: 'true' });
+        this.fetchTotalNumberOfPrayersFromContract();
+            // .then(() => {
+            //     this.fetchPrayers(0);
+            // });
+
     }
 
     onPaginatedSearch = (e) => {
@@ -54,7 +56,7 @@ export class ListPrayers extends Component {
     };
 
     handleOnPageinationButton(newPageNr){
-        this.state.page = newPageNr;
+        this.setState({page : newPageNr});
         this.onPaginatedSearch();
     };
 
@@ -67,56 +69,74 @@ export class ListPrayers extends Component {
         this.markPrayerAnsweredInContract(this.state.prayerAddress, this.state.prayerIndex);
     };
 
+    toDateTime(secs) {
+        if ( secs === "0" ) {
+            return '';
+        }
+        var t = new Date(1970, 0, 1); // Epoch
+        t.setSeconds(parseInt(secs, 10));
+        return t.toLocaleDateString('en-GB', { timeZone: 'UTC' });
+    }
+
+
     handleJoinPrayerButton(address, index){
-        this.state.prayerAddress = address;
-        this.state.prayerIndex = index;
+        this.setState({prayerAddress : address});
+        this.setState({prayerIndex : index});
         this.onJoinPrayer();
     };
 
     handleAnswerPrayerButton(address, index){
-        this.state.prayerAddress = address;
-        this.state.prayerIndex = index;
+        this.setState({prayerAddress : address});
+        this.setState({prayerIndex : index});
         this.onAnswerPrayer();
     };
 
     async incrementPrayerInContract(address, index) {
-        let state = this.props.context.drizzle.store.getState();
-        await this.props.context.drizzle.contracts.ThePrayerContract.methods.incrementPrayer(address, index).send({
-            from: state.accounts[0],
+        let account = this.state.address;
+        await config.prayerContract.methods.incrementPrayer(address, index).send({
+            from: account,
             gas: 650000
         });
     }
 
     async markPrayerAnsweredInContract(address, index) {
-        let state = this.props.context.drizzle.store.getState();
-        await this.props.context.drizzle.contracts.ThePrayerContract.methods.answerPrayer(address, index).send({
-            from: state.accounts[0],
+        let account = this.state.address;
+        await config.prayerContract.methods.answerPrayer(address, index).send({
+            from: account,
             gas: 650000
         });
     }
 
-    async fetchTotalNumberOfPrayersFromContract() {
-        let state = this.props.context.drizzle.store.getState();
-        let totalNumberOfPrayers = await prayerContract.methods.totalNumberOfPrayers().call({
-            from: state.accounts[0],
-            gas: 650000
-        }, function(error, result){
-            if(!error)
-                console.log(JSON.stringify(result));
-            else
-                console.error(error);
+      fetchTotalNumberOfPrayersFromContract(){
+        let account = this.state.address;
+        let self = this;
+        config.prayerContract.getTotalNumberOfPrayers().then(function(result){
+            if (result[0]) {
+                let number = result[0].toNumber(10);
+                console.log(number);
+                self.state.totalNumberOfPrayers = number;
+                self.state.pages = number > 0 ? Math.ceil(number / 10) : 0;
+                self.fetchPrayers(0);
+            }else{
+                console.error("Error");
+            }
         });
-        this.state.totalNumberOfPrayers = totalNumberOfPrayers;
-        this.state.pages = totalNumberOfPrayers>0?Math.ceil(totalNumberOfPrayers/10):0;
+
         //this.onSetNrOfPrayersResult(totalNumberOfPrayers);
-    }
+    };
+
+//     simpleStore.get().catch((error) => {
+//     // error null
+// }).then(result) => {
+//     // result <BigNumber ...>
+// });
     //columns to do
     //fetch with most recent
     //fetch in order of popularity
     //fetch most recently answered
 
     async fetchPrayersFromContract(page) {
-        let state = this.props.context.drizzle.store.getState();
+        let account = this.state.address;
         let from = page * 10;
         let to = from + 10;
         let prayers = [];
@@ -126,8 +146,8 @@ export class ListPrayers extends Component {
         // });
         let i = from;
         for (; i < to && i < this.state.totalNumberOfPrayers; i++) {
-            const result = await prayerContract.methods.getPrayer(i).call({
-                from: state.accounts[0],
+            const result = await config.prayerContract.methods.getPrayer(i).call({
+                from: account,
                 gas: 650000
             }, function(error, result){
                 if(!error)
@@ -141,17 +161,20 @@ export class ListPrayers extends Component {
                 count: result[2],
                 prayerTitle: result[3],
                 prayerDetail: result[4],
-                prayerTimestamp: result[5],
-                answeredTimestamp: result[6]
+                prayerTimestamp: this.toDateTime(result[5]),
+                answeredTimestamp: this.toDateTime(result[6])
 
             };
-            if (prayer.answeredTimestamp === "0") {
+            // if (prayer.answeredTimestamp === "0") {
                 prayers.push(prayer);
-            }
+            // }
         }
         if (prayers.length > 0) {
             this.onSetResult(prayers, page);
         }
+        this.setState( {
+            loading: 'false'
+        });
     }
 
     fetchPrayers = (page) =>
@@ -167,11 +190,17 @@ export class ListPrayers extends Component {
         this.setState(applySetResultNrOfPrayers(nrOfPrayers));
 
     render() {
-        let state = this.props.context.drizzle.store.getState();
+        if (this.state.loading === 'initial') {
+            return <h2>Intializing...</h2>;
+        }
+        if (this.state.loading === 'true') {
+            return <h2>Loading...</h2>;
+        }
+
         return (
             <div className="page">
                 <List
-                    address={state.accounts[0]}
+                    address={this.state.address}
                     list={this.state.prayers}
                     page={this.state.page}
                     pages={this.state.pages}
@@ -187,23 +216,8 @@ export class ListPrayers extends Component {
 
 }
 
-// const mapStateToProps = state => {
-//     return {
-//         accounts: state.accounts,
-//         drizzleStatus: state.drizzleStatus,
-//         ThePrayerContract: state.contracts.ThePrayerContract
-//     };
-// };
-
-
-ListPrayers.contextTypes = {
-    drizzle: PropTypes.object
-};
-
-
 let PageButtons = React.createClass({
     render: function() {
-
         let pageItems = _.range(0, this.props.noOfPages).map(i => { return { id: i, name: 'Item ' + i }; });
         return (
             <Pagination>
@@ -222,20 +236,33 @@ const List = ({address, list, page, pages, handleOnPageinationButton, answerPray
     return (
      <div>
         <div>
-            <ListGroup>
-                {list.map(function(prayer) {
-                    return <ListGroupItem color="primary" id={"Tooltip-" + prayer.prayerMakerAddress+prayer.index} key={prayer.prayerMakerAddress+prayer.index}>
-                        <PrayerWidget address={address}
-                                      title={prayer.prayerTitle}
-                                      detail={prayer.prayerDetail}
-                                      number={prayer.count}
-                                      index={prayer.index}
-                                      prayerMakerAddress={prayer.prayerMakerAddress}
-                                      onAnswer={answerPrayer}
-                                      onJoin={joinPrayer}/>
-                    </ListGroupItem>
+            <Table dark striped>
+                <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Title</th>
+                    <th>Created At</th>
+                    <th>Answered At</th>
+                    <th>Nr of Joins</th>
+                    <th>Join</th>
+                    <th>Answer</th>
+                </tr>
+                </thead>
+                <tbody>
+                {list.map(function(prayer, index) {
+                    return <tr id={prayer.prayerMakerAddress+':'+prayer.index} key={prayer.prayerMakerAddress+':'+prayer.index}>
+                        <td>{index}</td>
+                        <td>{prayer.prayerTitle}</td>
+                        <td>{prayer.prayerTimestamp}</td>
+                        <td>{prayer.answeredTimestamp}</td>
+                        <td>{prayer.count}</td>
+                        <td><Button color="info" active={prayer.prayerMakerAddress === address} onClick={() => joinPrayer(prayer.prayerMakerAddress, prayer.index)}>Join in Prayer</Button></td>
+                        <td><Button color="info" onClick={() => answerPrayer(prayer.prayerMakerAddress, prayer.index)}>Answer Prayer</Button></td>
+
+                    </tr>
                 })}
-            </ListGroup>
+                </tbody>
+            </Table>
         </div>
         <div className="interactions">
         {
@@ -246,4 +273,4 @@ const List = ({address, list, page, pages, handleOnPageinationButton, answerPray
      </div>)
 };
 
-export default ListPrayers;
+export default ListPrayersTable;

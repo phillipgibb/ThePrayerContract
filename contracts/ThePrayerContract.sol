@@ -86,6 +86,10 @@ contract ThePrayerContract {
         return numberOfPrayerMakers;
     }
 
+    function getTotalNumberOfPrayers() public view returns (uint){
+        return totalNumberOfPrayers;
+    }
+
     function incrementPrayer(address prayerAddress, uint prayerIndex) public {
         require(thePrayerList[prayerAddress].length > 0);
         thePrayerList[prayerAddress][prayerIndex].prayerCount = thePrayerList[prayerAddress][prayerIndex].prayerCount.add(1);
