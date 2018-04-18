@@ -1,6 +1,6 @@
 import React, {Component} from 'react'
 import {Table, Button} from 'reactstrap';
-import { Pagination, PaginationItem, PaginationLink} from 'reactstrap';
+import { Alert, Pagination, PaginationItem, PaginationLink} from 'reactstrap';
 import update from 'immutability-helper';
 var config = require("../config.js");
 
@@ -81,7 +81,7 @@ export class ListPrayersTable extends Component {
         var t = new Date(1970, 0, 1); // Epoch
         t.setSeconds(parseInt(secs, 10));
         return t.toLocaleDateString('en-GB', { timeZone: 'UTC' });
-    }
+    };
 
 
     handleJoinPrayerButton(address, index, prayerArrayIndex){
@@ -129,17 +129,19 @@ export class ListPrayersTable extends Component {
 
       fetchTotalNumberOfPrayersFromContract(){
         let self = this;
-        config.prayerContract.getTotalNumberOfPrayers().catch(function (error) {
-            console.error(error);
-        }).then(function(result){
+        config.prayerContract.getTotalNumberOfPrayers((error, result) => {
             if (result[0]) {
                 let number = result[0].toNumber(10);
                 console.log(number);
                 self.state.totalNumberOfPrayers = number;
                 self.state.pages = number > 0 ? Math.ceil(number / 10) : 0;
-                self.fetchPrayers(0);
+                if (number > 0) {
+                    self.fetchPrayers(0);
+                } else {
+                    self.setState({loading: 'empty'})
+                }
             }else{
-                console.error("Error");
+                console.error("Error: " + error);
             }
         });
 
@@ -157,11 +159,13 @@ export class ListPrayersTable extends Component {
     //fetch most recently answered
 
     fetchPrayersFromContract(page) {
+
         let from = page * 10;
         let to = from + 10;
         let prayers = [];
         let i = from;
         let self = this;
+
         for (; i < to && i < this.state.totalNumberOfPrayers; i++) {
             config.prayerContract.getPrayer(i).catch(function (error) {
                 console.error(error);
@@ -202,10 +206,14 @@ export class ListPrayersTable extends Component {
 
     render() {
         if (this.state.loading === 'initial') {
-            return <h2>Intializing...</h2>;
+            return <Alert className="text-center" color="success">Intializing...</Alert>;
         }
         if (this.state.loading === 'true') {
-            return <h2>Loading...</h2>;
+            return <Alert className="text-center" color="info">Loading...</Alert>;
+        }
+
+        if (this.state.loading === 'empty') {
+            return <Alert className="text-center" color="warning">No prayers currently, add yours and be the first</Alert>;
         }
 
         return (

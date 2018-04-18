@@ -33,6 +33,7 @@ class AddPrayerModal extends Component {
             self.setState({loadingPrayer: false});
          }).then(function(result){
              self.setState({loadingPrayer: false});
+             self.props.onAddPrayer();
              console.log(JSON.stringify(result));
         })
     }
