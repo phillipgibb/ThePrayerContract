@@ -30,7 +30,7 @@ class Home extends Component {
         };
 
         this.toggle = this.toggle.bind(this);
-
+        this.modalPrayerAdded = this.modalPrayerAdded.bind(this);
 
         // config.prayerContract.totalNumberOfPrayerMakers.call({
         //     from: this.state.address,
@@ -52,29 +52,34 @@ class Home extends Component {
         config.eth.coinbase((error, coinbase) =>{
             if(!error) {
                 console.log('coinbase: ' + coinbase);
-                this.setState( {
-                    address : coinbase,
-                    loading: 'false'
-                });
-                this.getTotalNumberOfPrayerMakers();
-                // Home.setupTestState(this.state.address);
+                if(coinbase === null) {
+                    this.setState({ loading: 'locked' });
+                } else {
+                    // this.setState({
+                    //     address: coinbase
+                    // });
+                    this.getTotalNumberOfPrayerMakers(coinbase);
+                    // Home.setupTestState(this.state.address);
+                }
             }else {
                 console.error(error);
             }
         });
     }
 
-    getTotalNumberOfPrayerMakers(){
+    getTotalNumberOfPrayerMakers(coinbase){
         let self = this;
-        config.prayerContract.getTheNumberOfPrayerMakers().catch(function (error) {
-            console.error(error);
-        }).then(function(result){
+        config.prayerContract.getTheNumberOfPrayerMakers((error, result) => {
             if (result[0]) {
                 let number = result[0].toNumber(10);
                 console.log(number);
-                self.setState({totalNumberOfPrayerMakers : number});
+                self.setState({
+                    loading: 'false',
+                    totalNumberOfPrayerMakers : number,
+                    address: coinbase
+                });
             }else{
-                console.error("Error");
+                console.error("Error: " + error);
             }
         });
     }
@@ -148,6 +153,11 @@ class Home extends Component {
         });
     }
 
+    //need to watch for transaction hash??
+    modalPrayerAdded = (e) => {
+        this.forceUpdate();
+    };
+
     onInitialSearch = (e) => {
         // e.preventDefault();
         // const { value } = this.input;
@@ -160,13 +170,20 @@ class Home extends Component {
 
     render() {
 
+        if (!config.eth) {
+            return <Alert className="text-center" color="danger">Install or Activate MetaMask</Alert>
+        }
+        if (this.state.loading === 'locked') {
+            return <Alert className="text-center" color="danger">Please unlock your metamask account...</Alert>;
+        }
+
         if (this.state.loading === 'initial') {
-            return <h2>Intializing...</h2>;
+            return <Alert className="text-center" color="success">Intializing...</Alert>
         }
 
 
         if (this.state.loading === 'true') {
-            return <h2>Loading...</h2>;
+            return <Alert className="text-center" color="info">Loading...</Alert>;
         }
         return (
             <Container>
@@ -209,7 +226,7 @@ class Home extends Component {
                 <Modal isOpen={this.state.modal} toggle={this.toggle}>
                     <ModalHeader toggle={this.toggle}>Add Prayer</ModalHeader>
                     <ModalBody>
-                        <AddPrayerModal address={this.state.address} onClose={this.toggle}/>
+                        <AddPrayerModal address={this.state.address} onClose={this.toggle} onAddPrayer={this.modalPrayerAdded}/>
                     </ModalBody>
                 </Modal>
             </Container>
