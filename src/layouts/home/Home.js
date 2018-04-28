@@ -11,6 +11,7 @@ import {
     ModalBody,
     Form,
     Input,
+    Label,
     InputGroup,
     InputGroupAddon,
     Container,
@@ -27,22 +28,12 @@ class Home extends Component {
             modal: false,
             address: 0,
             totalNumberOfPrayerMakers: 0,
+            onlyOwnPrayers: false
         };
 
         this.toggle = this.toggle.bind(this);
         this.modalPrayerAdded = this.modalPrayerAdded.bind(this);
-
-        // config.prayerContract.totalNumberOfPrayerMakers.call({
-        //     from: this.state.address,
-        //     gas: 650000
-        // }, (error, result) => {
-        //     if(!error) {
-        //         this.setState({totalNumberOfPrayerMakers : result});
-        //     }else {
-        //         console.error(error);
-        //     }
-        // });
-
+        this.toggleCheckbox = this.toggleCheckbox.bind(this);
     }
 
 
@@ -51,7 +42,6 @@ class Home extends Component {
         this.setState({ loading: 'true' });
         config.eth.coinbase((error, coinbase) =>{
             if(!error) {
-                console.log('coinbase: ' + coinbase);
                 if(coinbase === null) {
                     this.setState({ loading: 'locked' });
                 } else {
@@ -157,6 +147,12 @@ class Home extends Component {
     modalPrayerAdded = (e) => {
         this.forceUpdate();
     };
+    
+    toggleCheckbox() {
+        this.setState({
+            onlyOwnPrayers: !this.state.onlyOwnPrayers
+        });
+    }
 
     onInitialSearch = (e) => {
         // e.preventDefault();
@@ -205,6 +201,18 @@ class Home extends Component {
                         <div className="align-items-sm-center interactions">
                             <Form>
                                 <InputGroup>
+                                    <Label check>
+                                     <Input type="checkbox" onChange={this.toggleCheckbox} ref={node => this.input = node}/> {' '}
+                                        Only List Own Prayers
+                                     </Label>
+                                </InputGroup>
+                            </Form>
+                        </div>
+                    </Col>
+                    <Col sm="3">
+                        <div className="align-items-sm-center interactions">
+                            <Form>
+                                <InputGroup>
                                     <Input type="text" ref={node => this.input = node}/>
                                     <InputGroupAddon addonType="append"><Button color="info"
                                                                                 onClick={this.onInitialSearch}>Search</Button></InputGroupAddon>
@@ -218,7 +226,7 @@ class Home extends Component {
                  </Row>
                 <Row>
                     <Col>
-                        <ListPrayersTable address={this.state.address}/>
+                        <ListPrayersTable address={this.state.address} onlyOwnPrayers={this.state.onlyOwnPrayers} />
                     </Col>
 
                 </Row>

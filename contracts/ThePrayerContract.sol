@@ -1,6 +1,6 @@
-pragma solidity ^0.4.19;
+pragma solidity ^0.4.23;
 
-import "zeppelin-solidity/contracts/math/SafeMath.sol";
+import "node_modules/zeppelin-solidity/contracts/math/SafeMath.sol";
 
 contract ThePrayerContract {
     using SafeMath for uint256;
@@ -9,6 +9,8 @@ contract ThePrayerContract {
     mapping(address => PrayerData[]) public thePrayerList;
     mapping(uint => PrayerLinkData) public thePrayerLinks;
     mapping(uint => PrayerLinkData) public theAnsweredPrayerLinks;
+    mapping(address => uint) public numberOfPrayersByAddress;
+
     uint public numberOfPrayerMakers;
     uint public totalNumberOfPrayers;
     uint public totalNumberOfAnsweredPrayers;
@@ -34,16 +36,16 @@ contract ThePrayerContract {
     function getPrayer(uint index) public view returns (address, uint, uint, string, string, uint, uint) {
         require(totalNumberOfPrayers > 0);
         PrayerLinkData memory linkData = thePrayerLinks[index];
-        return getPrayer(linkData.prayerMakerAddress, linkData.prayerMakerIndex);
+        return getPrayerFromAddress(linkData.prayerMakerAddress, linkData.prayerMakerIndex);
     }
 
     function getAnsweredPrayer(uint index) public view returns (address, uint, uint, string, string, uint, uint) {
         require(totalNumberOfAnsweredPrayers > 0);
         PrayerLinkData memory linkData = theAnsweredPrayerLinks[index];
-        return getPrayer(linkData.prayerMakerAddress, linkData.prayerMakerIndex);
+        return getPrayerFromAddress(linkData.prayerMakerAddress, linkData.prayerMakerIndex);
     }
 
-    function getPrayer(address prayerAddress, uint index) public view returns (address, uint, uint, string, string, uint, uint) {
+    function getPrayerFromAddress(address prayerAddress, uint index) public view returns (address, uint, uint, string, string, uint, uint) {
         require(thePrayerList[prayerAddress].length > 0);
         PrayerData memory data = thePrayerList[prayerAddress][index];
         return (
@@ -57,23 +59,26 @@ contract ThePrayerContract {
         );
     }
 
-    function addPrayer(string _prayerTitle, string _prayerDetail) public {
+    function addPrayer(string _prayerTitle, string _prayerDetail, uint timestamp) public {
         require(keccak256(_prayerTitle) != keccak256(""));
         require(keccak256(_prayerDetail) != keccak256(""));
         uint noOfPrayers = thePrayerList[msg.sender].length;
         if (noOfPrayers == 0) {
-            PrayerData memory pd = PrayerData(_prayerTitle, _prayerDetail, false, 1, now, 0);
+            PrayerData memory pd = PrayerData(_prayerTitle, _prayerDetail, false, 1, timestamp, 0);
             thePrayerList[msg.sender].push(pd);
             thePrayerLinks[totalNumberOfPrayers] = PrayerLinkData(msg.sender, 0);
             numberOfPrayerMakers = numberOfPrayerMakers.add(1);
             totalNumberOfPrayers = totalNumberOfPrayers.add(1);
-            PrayerAdded(msg.sender, _prayerTitle, _prayerDetail);
+            numberOfPrayersByAddress[msg.sender] = 1;
+            emit PrayerAdded(msg.sender, _prayerTitle, _prayerDetail);
         } else {
             PrayerData[] storage prayerMakerPrayers = thePrayerList[msg.sender];
-            uint length = prayerMakerPrayers.push(PrayerData(_prayerTitle, _prayerDetail, false, 1, now, 0));
+            uint length = prayerMakerPrayers.push(PrayerData(_prayerTitle, _prayerDetail, false, 1, timestamp, 0));
             thePrayerLinks[totalNumberOfPrayers] = PrayerLinkData(msg.sender, length.sub(1));
             totalNumberOfPrayers = totalNumberOfPrayers.add(1);
-            PrayerAdded(msg.sender, _prayerTitle, _prayerDetail);
+            uint numberByAddress = numberOfPrayersByAddress[msg.sender].add(1);
+            numberOfPrayersByAddress[msg.sender] = numberByAddress;
+            emit PrayerAdded(msg.sender, _prayerTitle, _prayerDetail);
         }
     }
 
@@ -90,22 +95,26 @@ contract ThePrayerContract {
         return totalNumberOfPrayers;
     }
 
+    function getTotalNumberOfPrayersByAddress(address _address) public view returns (uint){
+        return thePrayerList[_address].length;
+    }
+
     function incrementPrayer(address prayerAddress, uint prayerIndex) public {
         require(thePrayerList[prayerAddress].length > 0);
         thePrayerList[prayerAddress][prayerIndex].prayerCount = thePrayerList[prayerAddress][prayerIndex].prayerCount.add(1);
-        PrayerIncemented(prayerAddress, prayerAddress, prayerIndex);
+        emit PrayerIncemented(prayerAddress, prayerAddress, prayerIndex);
     }
 
-    function answerPrayer(address prayerAddress, uint prayerIndex) public returns (uint) {
+    function answerPrayer(address prayerAddress, uint prayerIndex, uint timestamp) public returns (uint) {
         require(prayerAddress == msg.sender);
         require(thePrayerList[msg.sender].length > 0);
         require(thePrayerList[msg.sender][prayerIndex].answered == false);
         PrayerData storage prayer = thePrayerList[msg.sender][prayerIndex];
         prayer.answered = true;
-        prayer.answeredTimestamp = now;
+        prayer.answeredTimestamp = timestamp;
         theAnsweredPrayerLinks[totalNumberOfAnsweredPrayers] = PrayerLinkData(prayerAddress, prayerIndex);
         totalNumberOfAnsweredPrayers = totalNumberOfAnsweredPrayers.add(1);
-        PrayerAnswered(prayerAddress, prayer.prayerTitle, prayerIndex);
+        emit PrayerAnswered(prayerAddress, prayer.prayerTitle, prayerIndex);
         return prayer.answeredTimestamp.sub(prayer.timestamp);
     }
 

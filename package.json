@@ -55,6 +55,7 @@
     "bootstrap": "^4.0.0",
     "ethjs": "^0.3.6",
     "immutability-helper": "^2.6.6",
+    "jquery": "^3.3.1",
     "lodash": "^4.17.5",
     "minimist": "^1.2.0",
     "node-lipsum": "^1.0.1",
@@ -70,6 +71,7 @@
     "redux-auth-wrapper": "^1.0.0",
     "redux-saga": "^0.15.3",
     "redux-thunk": "^2.2.0",
+    "solc": "^0.4.23",
     "web3": "^1.0.0-beta.33"
   },
   "scripts": {

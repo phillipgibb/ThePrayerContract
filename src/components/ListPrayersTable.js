@@ -38,7 +38,8 @@ export class ListPrayersTable extends Component {
             pages: 0,
             prayerIndex: 0,
             address: props.address,
-            prayerAddress: 0x0
+            prayerAddress: 0x0,
+            onlyOwnPrayers: props.onlyOwnPrayers
         };
 
     }
@@ -47,9 +48,14 @@ export class ListPrayersTable extends Component {
         return true;
     }
 
+    componentWillReceiveProps(newProps) {
+        this.setState({onlyOwnPrayers: newProps.onlyOwnPrayers, loading: 'true' });
+      //  this.fetchTotalNumberOfPrayersFromContract();
+    }
+
     componentWillMount() {
         this.setState({ loading: 'true' });
-        this.fetchTotalNumberOfPrayersFromContract();
+        //this.fetchTotalNumberOfPrayersFromContract();
             // .then(() => {
             //     this.fetchPrayers(0);
             // });
@@ -116,23 +122,29 @@ export class ListPrayersTable extends Component {
 
     markPrayerAnsweredInContract(account, index) {
         let self = this;
-        config.prayerContract.answerPrayer(account, index, {
+        config.prayerContract.answerPrayer(account, index, Date.now(), {
             from: account,
             gas: 650000
         }).catch(function (error) {
             console.error(error);
         }).then(() => {
             self.setState(this.state);
-        }
-        );
+        });
     }
 
       fetchTotalNumberOfPrayersFromContract(){
         let self = this;
-        config.prayerContract.getTotalNumberOfPrayers((error, result) => {
+        let p;
+        if (self.state.onlyOwnPrayers){
+            p = config.prayerContract.getTotalNumberOfPrayersByAddress(this.state.address); 
+        }else {
+            p = config.prayerContract.getTotalNumberOfPrayers()
+        }
+        p.catch(function (error) {
+            console.error(error);
+        }).then(function(result){
             if (result[0]) {
                 let number = result[0].toNumber(10);
-                console.log(number);
                 self.state.totalNumberOfPrayers = number;
                 self.state.pages = number > 0 ? Math.ceil(number / 10) : 0;
                 if (number > 0) {
@@ -141,22 +153,10 @@ export class ListPrayersTable extends Component {
                     self.setState({loading: 'empty'})
                 }
             }else{
-                console.error("Error: " + error);
+                self.setState({loading: 'empty'})
             }
         });
-
-        //this.onSetNrOfPrayersResult(totalNumberOfPrayers);
     };
-
-//     simpleStore.get().catch((error) => {
-//     // error null
-// }).then(result) => {
-//     // result <BigNumber ...>
-// });
-    //columns to do
-    //fetch with most recent
-    //fetch in order of popularity
-    //fetch most recently answered
 
     fetchPrayersFromContract(page) {
 
@@ -167,7 +167,13 @@ export class ListPrayersTable extends Component {
         let self = this;
 
         for (; i < to && i < this.state.totalNumberOfPrayers; i++) {
-            config.prayerContract.getPrayer(i).catch(function (error) {
+            let p;
+            if (self.state.onlyOwnPrayers){
+                p = config.prayerContract.getPrayerFromAddress(this.state.address, i); 
+            }else {
+                p = config.prayerContract.getPrayer(i)
+            }
+            p.catch(function (error) {
                 console.error(error);
             }).then(function(result){
                 console.log(JSON.stringify(result));
@@ -209,6 +215,7 @@ export class ListPrayersTable extends Component {
             return <Alert className="text-center" color="success">Intializing...</Alert>;
         }
         if (this.state.loading === 'true') {
+            this.fetchTotalNumberOfPrayersFromContract();
             return <Alert className="text-center" color="info">Loading...</Alert>;
         }
 
