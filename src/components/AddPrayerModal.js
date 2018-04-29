@@ -12,7 +12,7 @@ class AddPrayerModal extends Component {
             loadingPrayer: false,
             prayerTitle: '',
             prayerDetail: '',
-            account: props.address
+            account: props.account
         };
     }
 
@@ -28,7 +28,7 @@ class AddPrayerModal extends Component {
      handleAddPrayerButton() {
         let self = this;
          self.setState({loadingPrayer: true});
-         config.prayerContract.addPrayer(this.state.prayerTitle, this.state.prayerDetail, Date.now(), {from: this.state.account, gas: 450000}).catch(function (error) {
+         config.prayerContract.methods.addPrayer(this.state.prayerTitle, this.state.prayerDetail, Date.now()).send( {from: this.state.account, gas: 450000}).catch(function (error) {
             console.error(error);
             self.setState({loadingPrayer: false});
          }).then(function(result){

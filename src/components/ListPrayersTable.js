@@ -37,7 +37,7 @@ export class ListPrayersTable extends Component {
             page: null,
             pages: 0,
             prayerIndex: 0,
-            address: props.address,
+            account: props.account,
             prayerAddress: 0x0,
             onlyOwnPrayers: props.onlyOwnPrayers
         };
@@ -104,7 +104,7 @@ export class ListPrayersTable extends Component {
 
     incrementPrayerInContract(account, index, prayerArrayIndex) {
         let self = this;
-        config.prayerContract.incrementPrayer(account, index, {
+        config.prayerContract.methods.incrementPrayer(account, index).send( {
             from: account,
             gas: 650000
         }).catch(function (error) {
@@ -122,7 +122,7 @@ export class ListPrayersTable extends Component {
 
     markPrayerAnsweredInContract(account, index) {
         let self = this;
-        config.prayerContract.answerPrayer(account, index, Date.now(), {
+        config.prayerContract.methods.answerPrayer(account, index, Date.now()).send( {
             from: account,
             gas: 650000
         }).catch(function (error) {
@@ -136,15 +136,15 @@ export class ListPrayersTable extends Component {
         let self = this;
         let p;
         if (self.state.onlyOwnPrayers){
-            p = config.prayerContract.getTotalNumberOfPrayersByAddress(this.state.address); 
+            p = config.prayerContract.methods.getTotalNumberOfPrayersByAddress(this.state.account).call(); 
         }else {
-            p = config.prayerContract.getTotalNumberOfPrayers()
+            p = config.prayerContract.methods.getTotalNumberOfPrayers().call();
         }
         p.catch(function (error) {
             console.error(error);
         }).then(function(result){
             if (result[0]) {
-                let number = result[0].toNumber(10);
+                let number = result[0];
                 self.state.totalNumberOfPrayers = number;
                 self.state.pages = number > 0 ? Math.ceil(number / 10) : 0;
                 if (number > 0) {
@@ -169,9 +169,9 @@ export class ListPrayersTable extends Component {
         for (; i < to && i < this.state.totalNumberOfPrayers; i++) {
             let p;
             if (self.state.onlyOwnPrayers){
-                p = config.prayerContract.getPrayerFromAddress(this.state.address, i); 
+                p = config.prayerContract.methods.getPrayerFromAddress(this.state.account, i).call(); 
             }else {
-                p = config.prayerContract.getPrayer(i)
+                p = config.prayerContract.methods.getPrayer(i).call();
             }
             p.catch(function (error) {
                 console.error(error);
@@ -179,12 +179,12 @@ export class ListPrayersTable extends Component {
                 console.log(JSON.stringify(result));
                 let prayer = {
                     prayerMakerAddress: result[0],
-                    index: result[1].toNumber(),
-                    count: result[2].toNumber(),
+                    index: result[1],
+                    count: result[2],
                     prayerTitle: result[3],
                     prayerDetail: result[4],
-                    prayerTimestamp: self.toDateTime(result[5].toNumber()),
-                    answeredTimestamp: self.toDateTime(result[6].toNumber())
+                    prayerTimestamp: self.toDateTime(result[5]),
+                    answeredTimestamp: self.toDateTime(result[6])
                 };
                 prayers.push(prayer);
                 if (prayers.length === self.state.totalNumberOfPrayers) {
@@ -226,7 +226,7 @@ export class ListPrayersTable extends Component {
         return (
             <div className="page">
                 <List
-                    address={this.state.address}
+                    account={this.state.account}
                     list={this.state.prayers}
                     page={this.state.page}
                     pages={this.state.pages}
@@ -258,7 +258,7 @@ let PageButtons = React.createClass({
     }
 });
 
-const List = ({address, list, page, pages, handleOnPageinationButton, answerPrayer, joinPrayer}) => {
+const List = ({account, list, page, pages, handleOnPageinationButton, answerPrayer, joinPrayer}) => {
     return (
      <div>
         <div>
@@ -283,7 +283,7 @@ const List = ({address, list, page, pages, handleOnPageinationButton, answerPray
                         <td>{prayer.answeredTimestamp}</td>
                         <td>{prayer.count}</td>
                         <td><Button color="info" disabled={(!(prayer.answeredTimestamp === ""))} onClick={() => joinPrayer(prayer.prayerMakerAddress, prayer.index, index)}>Join in Prayer</Button></td>
-                        <td><Button color="info" disabled={(!(prayer.answeredTimestamp === "" && prayer.prayerMakerAddress === address))} onClick={() => answerPrayer(prayer.prayerMakerAddress, prayer.index)}>Answer Prayer</Button></td>
+                        <td><Button color="info" disabled={(!(prayer.answeredTimestamp === "" && prayer.prayerMakerAddress === account))} onClick={() => answerPrayer(prayer.prayerMakerAddress, prayer.index)}>Answer Prayer</Button></td>
                     </tr>
                 } )}
                 </tbody>
