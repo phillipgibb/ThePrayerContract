@@ -7,3 +7,4 @@ build_webpack
 .vscode
 *.lock
 *lock.*
+*.log
