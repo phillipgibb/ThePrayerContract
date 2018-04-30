@@ -1,4 +1,4 @@
-pragma solidity ^0.4.23;
+pragma solidity 0.4.23;
 
 import "node_modules/zeppelin-solidity/contracts/math/SafeMath.sol";
 import "./Destructible.sol";
@@ -52,6 +52,8 @@ contract ThePrayerContract is Destructible, ReentrancyGuard{
 
     function getPrayerFromAddress(address prayerAddress, uint index) public view returns (address, uint, uint, string, string, uint, uint) {
         require(thePrayerList[prayerAddress].length > 0);
+        require(thePrayerList[prayerAddress].length > index);
+        
         PrayerData memory data = thePrayerList[prayerAddress][index];
         return (
             prayerAddress,
@@ -106,6 +108,7 @@ contract ThePrayerContract is Destructible, ReentrancyGuard{
 
     function incrementPrayer(address prayerAddress, uint prayerIndex) external nonReentrant {
         require(thePrayerList[prayerAddress].length > 0);
+        require(thePrayerList[prayerAddress].length > prayerIndex);
         thePrayerList[prayerAddress][prayerIndex].prayerCount = thePrayerList[prayerAddress][prayerIndex].prayerCount.add(1);
         emit PrayerIncemented(prayerAddress, prayerAddress, prayerIndex);
     }
@@ -113,6 +116,7 @@ contract ThePrayerContract is Destructible, ReentrancyGuard{
     function answerPrayer(address prayerAddress, uint prayerIndex, uint timestamp) external nonReentrant returns (uint)  {
         require(prayerAddress == msg.sender);
         require(thePrayerList[msg.sender].length > 0);
+        require(thePrayerList[msg.sender].length > prayerIndex);
         require(thePrayerList[msg.sender][prayerIndex].answered == false);
         PrayerData storage prayer = thePrayerList[msg.sender][prayerIndex];
         prayer.answered = true;
@@ -125,6 +129,7 @@ contract ThePrayerContract is Destructible, ReentrancyGuard{
 
     function isPrayerAnswered(address prayerAddress, uint prayerIndex) public view returns (bool) {
         require(thePrayerList[prayerAddress].length > 0);
+        require(thePrayerList[prayerAddress].length > prayerIndex);
         return thePrayerList[prayerAddress][prayerIndex].answered;
     }
 
