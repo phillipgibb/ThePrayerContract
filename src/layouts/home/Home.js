@@ -27,6 +27,7 @@ class Home extends Component {
             loading: 'initial',
             modal: false,
             account: 0x0,
+            accountChange: false,
             totalNumberOfPrayerMakers: 0,
             onlyOwnPrayers: false
         };
@@ -87,10 +88,12 @@ class Home extends Component {
         config.prayerContract.methods.getTheNumberOfPrayerMakers().call((error, result) => {
             if (result[0]) {
                 let number = result[0];
+                let accountChanged = self.state.account !== _account
                 self.setState({
                     loading: 'false',
                     totalNumberOfPrayerMakers : number,
-                    account: _account
+                    account: _account,
+                    accountChange: accountChanged
                 });
             }else{
                 console.error("Error: " + error);
@@ -252,7 +255,7 @@ class Home extends Component {
                  </Row>
                 <Row>
                     <Col>
-                        <ListPrayersTable account={this.state.account} onlyOwnPrayers={this.state.onlyOwnPrayers} />
+                        <ListPrayersTable account={this.state.account} accountChange={this.state.accountChange} onlyOwnPrayers={this.state.onlyOwnPrayers} />
                     </Col>
 
                 </Row>

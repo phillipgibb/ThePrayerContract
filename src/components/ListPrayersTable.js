@@ -38,6 +38,7 @@ export class ListPrayersTable extends Component {
             pages: 0,
             prayerIndex: 0,
             account: props.account,
+            accountChange: props.accountChange,
             prayerAddress: 0x0,
             onlyOwnPrayers: props.onlyOwnPrayers
         };
@@ -49,8 +50,13 @@ export class ListPrayersTable extends Component {
     }
 
     componentWillReceiveProps(newProps) {
-        this.setState({onlyOwnPrayers: newProps.onlyOwnPrayers, loading: 'true' });
-      //  this.fetchTotalNumberOfPrayersFromContract();
+     //   this.setState({onlyOwnPrayers: newProps.onlyOwnPrayers, loading: 'true' });
+     this.state.onlyOwnPrayers = newProps.onlyOwnPrayers;
+     this.state.accountChange = newProps.accountChange;
+     this.state.account = newProps.account;
+     if (this.state.loading !== 'true') {
+         this.fetchTotalNumberOfPrayersFromContract();
+     }
     }
 
     componentWillMount() {
@@ -145,11 +151,11 @@ export class ListPrayersTable extends Component {
         }).then(function(result){
             if (result[0]) {
                 let number = result[0];
-                self.state.totalNumberOfPrayers = number;
                 self.state.pages = number > 0 ? Math.ceil(number / 10) : 0;
-                if (number > 0) {
+                if (number > 0 && (self.state.totalNumberOfPrayers !== number || self.state.accountChange)) {
+                    self.state.totalNumberOfPrayers = number;
                     self.fetchPrayers(0);
-                } else {
+                } else if (number === 0) {
                     self.setState({loading: 'empty'})
                 }
             }else{
@@ -184,15 +190,16 @@ export class ListPrayersTable extends Component {
                     prayerTitle: result[3],
                     prayerDetail: result[4],
                     prayerTimestamp: self.toDateTime(result[5]),
-                    answeredTimestamp: self.toDateTime(result[6])
+                    answeredTimestamp: result[6] !== "0"?self.toDateTime(result[6]):""
                 };
                 prayers.push(prayer);
-                if (prayers.length === self.state.totalNumberOfPrayers) {
+                if (prayers.length === Number(self.state.totalNumberOfPrayers)) {
                     self.onSetResult(prayers, page);
                 }
                 self.setState( {
                     loading: 'false'
                 });
+               // self.state.loading = 'false'
             });
 
         }
@@ -214,6 +221,7 @@ export class ListPrayersTable extends Component {
         if (this.state.loading === 'initial') {
             return <Alert className="text-center" color="success">Intializing...</Alert>;
         }
+        
         if (this.state.loading === 'true') {
             this.fetchTotalNumberOfPrayersFromContract();
             return <Alert className="text-center" color="info">Loading...</Alert>;

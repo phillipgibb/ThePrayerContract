@@ -8,7 +8,7 @@ let contractAddress = "0x345ca3e014aaf5dca488057592ee47305d9b3e10";
 
 // let web3 = new Web3(Web3.givenProvider || "ws://localhost:8545");
 // let prayerContract = null;
-const eth = null;
+// const eth = null;
 // if (web3 && web3.currentProvider.isMetaMask) {
     //
 
