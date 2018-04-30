@@ -2,8 +2,9 @@ pragma solidity ^0.4.23;
 
 import "node_modules/zeppelin-solidity/contracts/math/SafeMath.sol";
 import "./Destructible.sol";
+import "./ReentrancyGuard.sol";
 
-contract ThePrayerContract is Destructible{
+contract ThePrayerContract is Destructible, ReentrancyGuard{
     using SafeMath for uint256;
     address public owner;
 
@@ -63,7 +64,7 @@ contract ThePrayerContract is Destructible{
         );
     }
 
-    function addPrayer(string _prayerTitle, string _prayerDetail, uint timestamp) public {
+    function addPrayer(string _prayerTitle, string _prayerDetail, uint timestamp) external nonReentrant {
         require(keccak256(_prayerTitle) != keccak256(""));
         require(keccak256(_prayerDetail) != keccak256(""));
         uint noOfPrayers = thePrayerList[msg.sender].length;
@@ -103,13 +104,13 @@ contract ThePrayerContract is Destructible{
         return thePrayerList[_address].length;
     }
 
-    function incrementPrayer(address prayerAddress, uint prayerIndex) public {
+    function incrementPrayer(address prayerAddress, uint prayerIndex) external nonReentrant {
         require(thePrayerList[prayerAddress].length > 0);
         thePrayerList[prayerAddress][prayerIndex].prayerCount = thePrayerList[prayerAddress][prayerIndex].prayerCount.add(1);
         emit PrayerIncemented(prayerAddress, prayerAddress, prayerIndex);
     }
 
-    function answerPrayer(address prayerAddress, uint prayerIndex, uint timestamp) public returns (uint) {
+    function answerPrayer(address prayerAddress, uint prayerIndex, uint timestamp) external nonReentrant returns (uint)  {
         require(prayerAddress == msg.sender);
         require(thePrayerList[msg.sender].length > 0);
         require(thePrayerList[msg.sender][prayerIndex].answered == false);
