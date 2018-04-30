@@ -1,8 +1,9 @@
 pragma solidity ^0.4.23;
 
 import "node_modules/zeppelin-solidity/contracts/math/SafeMath.sol";
+import "./Destructible.sol";
 
-contract ThePrayerContract {
+contract ThePrayerContract is Destructible{
     using SafeMath for uint256;
     address public owner;
 
@@ -18,6 +19,8 @@ contract ThePrayerContract {
     event PrayerAdded(address prayerAddress, string prayerTitle, string prayerDetail);
     event PrayerAnswered(address prayerAddress, string prayerTitle, uint index);
     event PrayerIncemented(address incrementorAddress, address prayerAddress, uint index);
+    event Sent(address indexed payee, uint256 amount, uint256 balance);
+    event Received(address indexed payer, uint256 amount, uint256 balance);
 
     struct PrayerData {
         string prayerTitle;
@@ -32,6 +35,7 @@ contract ThePrayerContract {
         address prayerMakerAddress;
         uint prayerMakerIndex;
     }
+
 
     function getPrayer(uint index) public view returns (address, uint, uint, string, string, uint, uint) {
         require(totalNumberOfPrayers > 0);
@@ -121,6 +125,18 @@ contract ThePrayerContract {
     function isPrayerAnswered(address prayerAddress, uint prayerIndex) public view returns (bool) {
         require(thePrayerList[prayerAddress].length > 0);
         return thePrayerList[prayerAddress][prayerIndex].answered;
+    }
+
+    function () public payable {
+        emit Received(msg.sender, msg.value, address(this).balance);
+    }
+
+  
+    function sendTo(address payee, uint256 amount) public onlyOwner {
+        require(payee != 0 && payee != address(this));
+        require(amount > 0);
+        payee.transfer(amount);
+        emit Sent(payee, amount, address(this).balance);
     }
 
 }
