@@ -26,47 +26,74 @@ class Home extends Component {
         this.state = {
             loading: 'initial',
             modal: false,
-            address: 0,
+            account: 0x0,
+            accountChange: false,
             totalNumberOfPrayerMakers: 0,
             onlyOwnPrayers: false
         };
 
-        this.toggle = this.toggle.bind(this);
+        this.timerId = -1;
+
+        this.toggleAddPrayerModal = this.toggleAddPrayerModal.bind(this);
         this.modalPrayerAdded = this.modalPrayerAdded.bind(this);
         this.toggleCheckbox = this.toggleCheckbox.bind(this);
     }
 
-
-    // need to wait for this response!!!!!!!!!!!!!!! or figure out why set state does not update render
-    componentWillMount() {
-        this.setState({ loading: 'true' });
-        config.eth.coinbase((error, coinbase) =>{
-            if(!error) {
-                if(coinbase === null) {
-                    this.setState({ loading: 'locked' });
-                } else {
-                    // this.setState({
-                    //     address: coinbase
-                    // });
-                    this.getTotalNumberOfPrayerMakers(coinbase);
-                    // Home.setupTestState(this.state.address);
-                }
-            }else {
-                console.error(error);
+    detectAccount = () => {
+        config.web3.eth.getAccounts().then( accounts => {
+            this.checkAccount(accounts);
+        }).catch(e => { // Error catched if method doesn't exist
+            console.log(e);
+            const accounts = config.web3.accounts; // We'll try to get accounts from previous versions ( up to Web3 v0.20.x)
+            if(accounts){
+                this.checkAccount(accounts);
             }
         });
     }
 
-    getTotalNumberOfPrayerMakers(coinbase){
+    checkAccount(_accounts){
+        if (_accounts.length > 0) {
+            this.getTotalNumberOfPrayerMakers(_accounts[0]);
+        } else {
+            this.setState({loading: 'locked'})
+        }
+    }
+
+    componentWillUnmount() {
+        this.clearDetectAccountsTimer();
+    }
+
+    componentWillMount() {
+        this.setState({ loading: 'true' });
+        this.detectAccount();
+        if(this.timerId !== -1){
+            this.clearDetectAccountTimer();
+        }
+        setTimeout(this.setDetectAccountTimer(), 5000);
+    }
+
+    setDetectAccountTimer(){
+        this.timerId = setInterval(
+            () => this.detectAccount(),
+            5000
+        );
+    }
+
+    clearDetectAccountTimer(){
+        clearInterval(this.timerId);
+    }
+
+    getTotalNumberOfPrayerMakers(_account){
         let self = this;
-        config.prayerContract.getTheNumberOfPrayerMakers((error, result) => {
+        config.prayerContract.methods.getTheNumberOfPrayerMakers().call((error, result) => {
             if (result[0]) {
-                let number = result[0].toNumber(10);
-                console.log(number);
+                let number = result[0];
+                let accountChanged = self.state.account !== _account
                 self.setState({
                     loading: 'false',
                     totalNumberOfPrayerMakers : number,
-                    address: coinbase
+                    account: _account,
+                    accountChange: accountChanged
                 });
             }else{
                 console.error("Error: " + error);
@@ -74,7 +101,7 @@ class Home extends Component {
         });
     }
 
-    static setupTestState(address) {
+    static setupTestState(account) {
         let Lipsum = require('node-lipsum');
         var lipsum = new Lipsum();
         var lipsumOpts = {
@@ -85,7 +112,7 @@ class Home extends Component {
 
         // for (let i = 0; i < 1; i++) {
         //     Home.getTestDetail(lipsum, lipsumOpts).then(function (detail) {
-        //         Home.addTestPrayer2("Please Help Account[0] Number [" + i + "]", detail, address, prayerContract);
+        //         Home.addTestPrayer2("Please Help Account[0] Number [" + i + "]", detail, account, prayerContract);
         //     });
         // }
 
@@ -137,7 +164,7 @@ class Home extends Component {
     }
 
 
-    toggle() {
+    toggleAddPrayerModal() {
         this.setState({
             modal: !this.state.modal
         });
@@ -166,7 +193,7 @@ class Home extends Component {
 
     render() {
 
-        if (!config.eth) {
+        if (!config.web3) {
             return <Alert className="text-center" color="danger">Install or Activate MetaMask</Alert>
         }
         if (this.state.loading === 'locked') {
@@ -195,10 +222,11 @@ class Home extends Component {
                 </Row>
                 <Row className="pb-sm-3 justify-content-center" >
                     <Col sm="3" className="align-items-sm-center" >
-                        <Button color="info" onClick={this.toggle}>Submit your Prayer</Button>
+                        <Button color="info" onClick={this.toggleAddPrayerModal}>Submit your Prayer</Button>
                     </Col>
                     <Col sm="3">
                         <div className="align-items-sm-center interactions">
+                        <Alert className="text-center" color="success">
                             <Form>
                                 <InputGroup>
                                     <Label check>
@@ -207,6 +235,7 @@ class Home extends Component {
                                      </Label>
                                 </InputGroup>
                             </Form>
+                            </Alert>
                         </div>
                     </Col>
                     <Col sm="3">
@@ -226,15 +255,15 @@ class Home extends Component {
                  </Row>
                 <Row>
                     <Col>
-                        <ListPrayersTable address={this.state.address} onlyOwnPrayers={this.state.onlyOwnPrayers} />
+                        <ListPrayersTable account={this.state.account} accountChange={this.state.accountChange} onlyOwnPrayers={this.state.onlyOwnPrayers} />
                     </Col>
 
                 </Row>
 
-                <Modal isOpen={this.state.modal} toggle={this.toggle}>
-                    <ModalHeader toggle={this.toggle}>Add Prayer</ModalHeader>
+                <Modal isOpen={this.state.modal} toggle={this.toggleAddPrayerModal}>
+                    <ModalHeader toggle={this.toggleAddPrayerModal}>Add Prayer</ModalHeader>
                     <ModalBody>
-                        <AddPrayerModal address={this.state.address} onClose={this.toggle} onAddPrayer={this.modalPrayerAdded}/>
+                        <AddPrayerModal account={this.state.account} onClose={this.toggleAddPrayerModal} onAddPrayer={this.modalPrayerAdded}/>
                     </ModalBody>
                 </Modal>
             </Container>
