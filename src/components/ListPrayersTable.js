@@ -17,9 +17,9 @@ const applySetResult = (result, page) => (prevState) => ({
     page: page,
 });
 
-const applySetResultNrOfPrayers = (totalNumberOfPrayers) => (prevState) => ({
-    totalNumberOfPrayers: totalNumberOfPrayers,
-    pages: totalNumberOfPrayers>0?Math.ceil(totalNumberOfPrayers/10):0,
+const applySetResultNrOfPrayers = (numberOfPrayers) => (prevState) => ({
+    numberOfPrayers: numberOfPrayers,
+    pages: numberOfPrayers>0?Math.ceil(numberOfPrayers/10):0,
 });
 
 
@@ -33,6 +33,7 @@ export class ListPrayersTable extends Component {
         this.state = {
             loading: 'initial',
             totalNumberOfPrayers: 0,
+            numberOfPrayers: 0,
             prayers: [],
             page: null,
             pages: 0,
@@ -40,7 +41,8 @@ export class ListPrayersTable extends Component {
             account: props.account,
             accountChange: props.accountChange,
             prayerAddress: 0x0,
-            onlyOwnPrayers: props.onlyOwnPrayers
+            onlyOwnPrayers: props.onlyOwnPrayers,
+            onlyOwnPrayersChanged: false
         };
 
     }
@@ -50,22 +52,22 @@ export class ListPrayersTable extends Component {
     }
 
     componentWillReceiveProps(newProps) {
-     //   this.setState({onlyOwnPrayers: newProps.onlyOwnPrayers, loading: 'true' });
-     this.state.onlyOwnPrayers = newProps.onlyOwnPrayers;
-     this.state.accountChange = newProps.accountChange;
-     this.state.account = newProps.account;
-     if (this.state.loading !== 'true') {
-         this.fetchTotalNumberOfPrayersFromContract();
-     }
+        if(this.state.onlyOwnPrayers !== newProps.onlyOwnPrayers){
+            this.state.onlyOwnPrayersChanged = true;
+        }else{
+            this.state.onlyOwnPrayersChanged = false;            
+        }
+        this.state.onlyOwnPrayers = newProps.onlyOwnPrayers;
+        this.state.accountChange = newProps.accountChange;
+        this.state.totalNumberOfPrayers = newProps.totalNumberOfPrayers;
+        this.state.account = newProps.account;
+        if (this.state.loading !== 'true') {
+            this.fetchNumberOfPrayersFromContract();
+        }
     }
 
     componentWillMount() {
         this.setState({ loading: 'true' });
-        //this.fetchTotalNumberOfPrayersFromContract();
-            // .then(() => {
-            //     this.fetchPrayers(0);
-            // });
-
     }
 
     onPaginatedSearch = (e) => {
@@ -116,8 +118,6 @@ export class ListPrayersTable extends Component {
         }).catch(function (error) {
             console.error(error);
         }).then(() => {
-            // self.state.prayers[prayerArrayIndex].count++;
-            // self.setState({ state: self.state });
             let pList = self.state.prayers;
             let newPrayer = update(pList[prayerArrayIndex], {count: function(x) {return x +1;}});
             pList[prayerArrayIndex] = newPrayer;
@@ -138,7 +138,7 @@ export class ListPrayersTable extends Component {
         });
     }
 
-      fetchTotalNumberOfPrayersFromContract(){
+      fetchNumberOfPrayersFromContract(){
         let self = this;
         let p;
         if (self.state.onlyOwnPrayers){
@@ -152,10 +152,10 @@ export class ListPrayersTable extends Component {
             if (result[0]) {
                 let number = result[0];
                 self.state.pages = number > 0 ? Math.ceil(number / 10) : 0;
-                if (number > 0 && (self.state.totalNumberOfPrayers !== number || self.state.accountChange)) {
-                    self.state.totalNumberOfPrayers = number;
-                    self.fetchPrayers(0);
-                } else if (number === 0) {
+                if (number > 0 && (!self.state.onlyOwnPrayersChanged || self.state.numberOfPrayers !== number || self.state.accountChange)) {
+                    self.state.numberOfPrayers = number;
+                    self.fetchPrayers(self.state.page);
+                } else if (number === "0") {
                     self.setState({loading: 'empty'})
                 }
             }else{
@@ -172,7 +172,7 @@ export class ListPrayersTable extends Component {
         let i = from;
         let self = this;
 
-        for (; i < to && i < this.state.totalNumberOfPrayers; i++) {
+        for (; i < to && i < this.state.numberOfPrayers; i++) {
             let p;
             if (self.state.onlyOwnPrayers){
                 p = config.prayerContract.methods.getPrayerFromAddress(this.state.account, i).call(); 
@@ -182,7 +182,6 @@ export class ListPrayersTable extends Component {
             p.catch(function (error) {
                 console.error(error);
             }).then(function(result){
-                console.log(JSON.stringify(result));
                 let prayer = {
                     prayerMakerAddress: result[0],
                     index: result[1],
@@ -193,7 +192,7 @@ export class ListPrayersTable extends Component {
                     answeredTimestamp: result[6] !== "0"?self.toDateTime(result[6]):""
                 };
                 prayers.push(prayer);
-                if (prayers.length === Number(self.state.totalNumberOfPrayers)) {
+                if (prayers.length === Number(self.state.numberOfPrayers)) {
                     self.onSetResult(prayers, page);
                 }
                 self.setState( {
@@ -207,7 +206,6 @@ export class ListPrayersTable extends Component {
 
     fetchPrayers = (page) =>
         this.fetchPrayersFromContract(page);
-    // .then(result => this.onSetResult(result, page));
 
     onSetResult = (result, page) =>
         page === 0
@@ -223,12 +221,16 @@ export class ListPrayersTable extends Component {
         }
         
         if (this.state.loading === 'true') {
-            this.fetchTotalNumberOfPrayersFromContract();
+            this.fetchNumberOfPrayersFromContract();
             return <Alert className="text-center" color="info">Loading...</Alert>;
         }
 
-        if (this.state.loading === 'empty') {
-            return <Alert className="text-center" color="warning">No prayers currently, add yours and be the first</Alert>;
+        if (this.state.loading === 'empty'){
+            if(this.state.totalNumberOfPrayers === 0) {
+                return <Alert className="text-center" color="warning">No prayers currently, add yours and be the first</Alert>;
+            }else{
+                return <Alert className="text-center" color="warning">You have not added any prayers yet</Alert>;
+            }
         }
 
         return (

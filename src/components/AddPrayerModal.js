@@ -28,14 +28,18 @@ class AddPrayerModal extends Component {
      handleAddPrayerButton() {
         let self = this;
          self.setState({loadingPrayer: true});
-         config.prayerContract.methods.addPrayer(this.state.prayerTitle, this.state.prayerDetail, Date.now()).send( {from: this.state.account, gas: 450000}).catch(function (error) {
+         let addPrayerEvent = config.prayerContract.methods
+         .addPrayer(this.state.prayerTitle, this.state.prayerDetail, Date.now())
+         .send( {from: this.state.account, gas: 450000})
+         .on('transactionHash', function(hash){
+            self.props.onAddPrayer(self.state.prayerTitle, hash, this);
+            self.setState({loadingPrayer: false});
+        }).catch(function (error) {
             console.error(error);
             self.setState({loadingPrayer: false});
-         }).then(function(result){
-             self.setState({loadingPrayer: false});
-             self.props.onAddPrayer();
-             console.log(JSON.stringify(result));
-        })
+         })
+         console.log("addPrayerEvent : "+addPrayerEvent)
+         
     }
     render() {
         return (

@@ -6,7 +6,6 @@ import "./ReentrancyGuard.sol";
 
 contract ThePrayerContract is Destructible, ReentrancyGuard{
     using SafeMath for uint256;
-    address public owner;
 
     mapping(address => PrayerData[]) public thePrayerList;
     mapping(uint => PrayerLinkData) public thePrayerLinks;
@@ -66,7 +65,7 @@ contract ThePrayerContract is Destructible, ReentrancyGuard{
         );
     }
 
-    function addPrayer(string _prayerTitle, string _prayerDetail, uint timestamp) external nonReentrant {
+    function addPrayer(string _prayerTitle, string _prayerDetail, uint timestamp) external payable nonReentrant {
         require(keccak256(_prayerTitle) != keccak256(""));
         require(keccak256(_prayerDetail) != keccak256(""));
         uint noOfPrayers = thePrayerList[msg.sender].length;
@@ -106,14 +105,14 @@ contract ThePrayerContract is Destructible, ReentrancyGuard{
         return thePrayerList[_address].length;
     }
 
-    function incrementPrayer(address prayerAddress, uint prayerIndex) external nonReentrant {
+    function incrementPrayer(address prayerAddress, uint prayerIndex) external payable nonReentrant {
         require(thePrayerList[prayerAddress].length > 0);
         require(thePrayerList[prayerAddress].length > prayerIndex);
         thePrayerList[prayerAddress][prayerIndex].prayerCount = thePrayerList[prayerAddress][prayerIndex].prayerCount.add(1);
         emit PrayerIncemented(prayerAddress, prayerAddress, prayerIndex);
     }
 
-    function answerPrayer(address prayerAddress, uint prayerIndex, uint timestamp) external nonReentrant returns (uint)  {
+    function answerPrayer(address prayerAddress, uint prayerIndex, uint timestamp) external payable nonReentrant returns (uint)  {
         require(prayerAddress == msg.sender);
         require(thePrayerList[msg.sender].length > 0);
         require(thePrayerList[msg.sender].length > prayerIndex);

@@ -1,6 +1,12 @@
+import '../../css/oswald.css'
+import '../../css/open-sans.css'
+import '../../css/pure-min.css'
+import '../../App.css'
+
 import React, {Component} from 'react'
 import ListPrayersTable from '../../components/ListPrayersTable'
 import AddPrayerModal from "../../components/AddPrayerModal.js";
+import NavbarHeader from "../../components/NavbarHeader.js";
 var config = require("../../config.js");
 
 import {
@@ -18,6 +24,7 @@ import {
     Row,
     Col
 } from 'reactstrap';
+import NavStats from '../../components/NavStats';
 
 
 class Home extends Component {
@@ -28,15 +35,17 @@ class Home extends Component {
             modal: false,
             account: 0x0,
             accountChange: false,
+            onlyOwnPrayers: true,
             totalNumberOfPrayerMakers: 0,
-            onlyOwnPrayers: false
+            totalNumberOfPrayers: 0,
+            pendingPrayers: [{}]
         };
 
         this.timerId = -1;
 
         this.toggleAddPrayerModal = this.toggleAddPrayerModal.bind(this);
+        this.toggleOnlyPrayersSwitch = this.toggleOnlyPrayersSwitch.bind(this);
         this.modalPrayerAdded = this.modalPrayerAdded.bind(this);
-        this.toggleCheckbox = this.toggleCheckbox.bind(this);
     }
 
     detectAccount = () => {
@@ -94,6 +103,21 @@ class Home extends Component {
                     totalNumberOfPrayerMakers : number,
                     account: _account,
                     accountChange: accountChanged
+                });
+                self.getTotalNumberOfPrayers();
+            }else{
+                console.error("Error: " + error);
+            }
+        });
+    }
+
+    getTotalNumberOfPrayers(){
+        let self = this;
+        config.prayerContract.methods.getTotalNumberOfPrayers().call((error, result) => {
+            if (result[0]) {
+                let number = result[0];
+                self.setState({
+                    totalNumberOfPrayers: number
                 });
             }else{
                 console.error("Error: " + error);
@@ -170,16 +194,40 @@ class Home extends Component {
         });
     }
 
-    //need to watch for transaction hash??
-    modalPrayerAdded = (e) => {
-        this.forceUpdate();
-    };
-    
-    toggleCheckbox() {
+    toggleOnlyPrayersSwitch() {
         this.setState({
             onlyOwnPrayers: !this.state.onlyOwnPrayers
         });
     }
+
+    //need to watch for transaction hash??
+    modalPrayerAdded = (_prayerTitle, _txHash, _txEvent) => {
+        let _pendingPrayers = this.state.pendingPrayers.slice(0);
+        _pendingPrayers.push({prayerTitle: _prayerTitle, transactionTimestamp: Date(), transactionHash: _txHash, receiptReceived: false, confirms: 0});
+        this.setState({pendingPrayers: _pendingPrayers});
+        _txEvent.on('receipt', function(receipt){
+            console.log(receipt)
+            let _pendingPrayers = this.state.pendingPrayers.slice(0);
+            let index = _pendingPrayers.findIndex(function(_pendingPrayers){
+                _pendingPrayers.transactionHash === receipt.transactionHash;
+            })
+            _pendingPrayers[index].receiptReceived = true;
+            this.setState({pendingPrayers: _pendingPrayers});
+        }).on('confirmation', function(confirmNumber, receipt){
+            console.log(confirm)
+            let _pendingPrayers = this.state.pendingPrayers.slice(0);
+            let index = _pendingPrayers.findIndex(function(_pendingPrayers){
+                _pendingPrayers.transactionHash === receipt.transactionHash;
+            })
+            _pendingPrayers[index].confirms = confirmNumber;
+            if(confirmNumber >= 3){
+                if (index > -1) {
+                    _pendingPrayers.splice(index, 1);
+                }
+            }
+            this.setState({pendingPrayers: _pendingPrayers});
+        })
+    };
 
     onInitialSearch = (e) => {
         // e.preventDefault();
@@ -209,57 +257,24 @@ class Home extends Component {
             return <Alert className="text-center" color="info">Loading...</Alert>;
         }
         return (
-            <Container>
-                <h1 className="text-center">The Prayer Contract</h1>
-                <h2 className="text-center">Your Prayer on the Blockchain</h2>
-                <Row>
-                    <Col sm={{ size: 6, order: 2, offset: 3 }}>
-                        <Alert className="text-center" color="success">
-                            The Number of Prayer Makers:{" "}
-                            {this.state.totalNumberOfPrayerMakers}
-                        </Alert>
-                    </Col>
-                </Row>
-                <Row className="pb-sm-3 justify-content-center" >
-                    <Col sm="3" className="align-items-sm-center" >
-                        <Button color="info" onClick={this.toggleAddPrayerModal}>Submit your Prayer</Button>
-                    </Col>
-                    <Col sm="3">
-                        <div className="align-items-sm-center interactions">
-                        <Alert className="text-center" color="success">
-                            <Form>
-                                <InputGroup>
-                                    <Label check>
-                                     <Input type="checkbox" onChange={this.toggleCheckbox} ref={node => this.input = node}/> {' '}
-                                        Only List Own Prayers
-                                     </Label>
-                                </InputGroup>
-                            </Form>
-                            </Alert>
-                        </div>
-                    </Col>
-                    <Col sm="3">
-                        <div className="align-items-sm-center interactions">
-                            <Form>
-                                <InputGroup>
-                                    <Input type="text" ref={node => this.input = node}/>
-                                    <InputGroupAddon addonType="append"><Button color="info"
-                                                                                onClick={this.onInitialSearch}>Search</Button></InputGroupAddon>
-                                </InputGroup>
-                            </Form>
-                        </div>
-                    </Col>
-                </Row>
-                <Row  className="justify-content-sm-center">
-                    <Col sm={{ size: 6, order: 2 }}><Alert className="text-center" color="success">The Prayer List</Alert></Col>
-                 </Row>
+            <Container fluid>
+                <NavbarHeader   toggleAddPrayerModal={this.toggleAddPrayerModal} 
+                                toggleOnlyPrayersSwitch={this.toggleOnlyPrayersSwitch}
+                                numberOfPrayerMakers={this.state.totalNumberOfPrayerMakers} 
+                                numberOfPrayers={this.state.totalNumberOfPrayers}/>
                 <Row>
                     <Col>
-                        <ListPrayersTable account={this.state.account} accountChange={this.state.accountChange} onlyOwnPrayers={this.state.onlyOwnPrayers} />
+                        <ListPrayersTable   account={this.state.account} 
+                                            accountChange={this.state.accountChange} 
+                                            onlyOwnPrayers={this.state.onlyOwnPrayers} 
+                                            totalNumberOfPrayers={this.state.totalNumberOfPrayers}/>
                     </Col>
-
                 </Row>
-
+                {/* <Row>
+                    <Col>
+                        <PendingPrayers pendingPrayers={this.state.pendingPrayers}/>
+                    </Col>
+                </Row> */}
                 <Modal isOpen={this.state.modal} toggle={this.toggleAddPrayerModal}>
                     <ModalHeader toggle={this.toggleAddPrayerModal}>Add Prayer</ModalHeader>
                     <ModalBody>
@@ -271,5 +286,5 @@ class Home extends Component {
         )
     }
 }
-
+//<div>Icons made by <a href="http://www.freepik.com" title="Freepik">Freepik</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a> is licensed by <a href="http://creativecommons.org/licenses/by/3.0/" title="Creative Commons BY 3.0" target="_blank">CC 3.0 BY</a></div>
 export default Home
