@@ -133,7 +133,7 @@ contract ThePrayerContract is Destructible, ReentrancyGuard{
     }
 
     function () public payable {
-        emit Received(msg.sender, msg.value, address(this).balance);
+        
     }
 
   

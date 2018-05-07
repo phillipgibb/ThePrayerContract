@@ -19,28 +19,28 @@ import registerServiceWorker from './registerServiceWorker';
 import ThePrayerContract from './../build/contracts/ThePrayerContract.json'
 
 // Redux Store
-import store from './store'
+// import store from './store'
 
 // Initialize react-router-redux.
-const history = syncHistoryWithStore(browserHistory, store);
+// const history = syncHistoryWithStore(browserHistory, store);
 
 // Set Drizzle options.
-const options = {
-  web3: {
-    block: false,
-    fallback: {
-      type: 'ws',
-      url: 'ws://127.0.0.1:8545'
-    }
-    , gas: 7000000
-  },
-  contracts: [
-    ThePrayerContract
-  ],
-  events: {
-    ThePrayerContract: ['PrayerAdded', 'PrayerAnswered', 'PrayerIncemented']
-  }
-};
+// const options = {
+//   web3: {
+//     block: false,
+//     fallback: {
+//       type: 'ws',
+//       url: 'ws://127.0.0.1:9545'
+//     }
+//     , gas: 210000
+//   },
+//   contracts: [
+//     ThePrayerContract
+//   ],
+//   events: {
+//     ThePrayerContract: ['PrayerAdded', 'PrayerAnswered', 'PrayerIncemented']
+//   }
+// };
 
 ReactDOM.render(<Home />, document.getElementById('root'));
 registerServiceWorker();

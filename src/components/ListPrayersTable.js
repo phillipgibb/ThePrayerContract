@@ -1,5 +1,5 @@
 import React, {Component} from 'react'
-import {Table, Button} from 'reactstrap';
+import {Container, Table, Button} from 'reactstrap';
 import { Alert, Pagination, PaginationItem, PaginationLink} from 'reactstrap';
 import update from 'immutability-helper';
 var config = require("../config.js");
@@ -270,8 +270,7 @@ let PageButtons = React.createClass({
 
 const List = ({account, list, page, pages, handleOnPageinationButton, answerPrayer, joinPrayer}) => {
     return (
-     <div>
-        <div>
+        <Container fluid>
             <Table dark striped>
                 <thead>
                 <tr>
@@ -298,14 +297,13 @@ const List = ({account, list, page, pages, handleOnPageinationButton, answerPray
                 } )}
                 </tbody>
             </Table>
-        </div>
         <div className="interactions">
         {
             page !== null && <div><br/><PageButtons noOfPages={pages} handleOnPageinationButton={handleOnPageinationButton} /></div>
 
         }
         </div>
-     </div>)
+        </Container>)
 };
 
 export default ListPrayersTable;

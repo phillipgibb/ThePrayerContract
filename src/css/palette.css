@@ -1,0 +1,8 @@
+:root {
+    --dark-background-color: rgba(10, 17, 40, 1);
+    --dark-blue-background-color: rgba(0, 31, 84, 1);
+    --blue-background-color: rgba(3, 64, 120, 1);
+    --light-blue-background-color: rgba(18, 130, 162, 1);
+    --pale-background-color: rgba(244, 252, 251, 1) !important;
+    --pale-color: rgba(10, 17, 40, 1) !important;
+}

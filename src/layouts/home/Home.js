@@ -1,6 +1,8 @@
 import '../../css/oswald.css'
 import '../../css/open-sans.css'
 import '../../css/pure-min.css'
+import '../../css/palette.css'
+
 import '../../App.css'
 
 import React, {Component} from 'react'
@@ -149,14 +151,14 @@ class Home extends Component {
     }
 
     static  addTestPrayer(title, detail, account, contract) {
-       let promise = contract.methods.addPrayer(title, detail).send({from: account});
+       let promise = contract.methods.addPrayer(title, detail, Date.now()).send({from: account});
         promise.then((result) => {
             console.log('result:', result)
         })
     }
 
       static addTestPrayer2(title, detail, account, contract) {
-         contract.methods.addPrayer(title, detail).send({from: account, gas: 450000}, function(error, result){
+         contract.methods.addPrayer(title, detail, Date.now()).send({from: account, gas: 450000}, function(error, result){
              if(!error)
                  console.log(JSON.stringify(result));
              else
@@ -165,7 +167,7 @@ class Home extends Component {
       }
 
     static addTestPrayer3(title, detail, account, contract) {
-        contract.methods.addPrayer(title, detail).send({from: account}, function(error, result){
+        contract.methods.addPrayer(title, detail, Date.now()).send({from: account}, function(error, result){
             if(!error)
                 console.log(JSON.stringify(result));
             else

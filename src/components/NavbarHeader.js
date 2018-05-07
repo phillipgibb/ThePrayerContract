@@ -36,25 +36,25 @@ export default class NavbarHeader extends Component {
     render() {
     return (
         <Container fluid>
-            <Navbar color="light" light expand="md">
-                <Row style={{flexWrap: 'nowrap'}}>
-                    <Col sm="6">
+            <Navbar light expand="md">
+                <Row style={{flexWrap: 'nowrap', width: '100%', height: '100px', paddingTop: '20px'}}>
+                    <Col sm="5">
                        <img src={mainLogo} alt="The Prayer Contract" width='50px'/>{"    "}
-                        <NavbarBrand className="text-center"  href="/">
+                        <NavbarBrand className="text-center">
                             The Prayer Contract - your prayer on the blockchain
                         </NavbarBrand>
                     </Col>
                     <Col sm="2">
-                        <Button color="info" onClick={this.props.toggleAddPrayerModal}>Submit Prayer</Button>
+                        <Button onClick={this.props.toggleAddPrayerModal}>Submit Prayer</Button>
                     </Col>
-                    <Col sm="3">
+                    <Col sm="2">
                         <label className="switchLabel">All Prayers:</label>
                         <label className="switch">
                             <input type="checkbox" onChange={this.handleSwitchToggle} ref={node => this.input = node}/>
                             <span className="slider"></span>
                         </label>
                     </Col>
-                    <Col sm="4">
+                    <Col sm="auto">
                         <NavStats numberOfPrayerMakers={this.props.numberOfPrayerMakers} numberOfPrayers={this.props.numberOfPrayers}/>
                     </Col>
           </Row>        
